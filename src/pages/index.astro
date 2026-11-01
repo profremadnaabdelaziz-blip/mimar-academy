@@ -1,0 +1,111 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import HeroBanner from '../components/HeroBanner.astro';
+import PillarCards from '../components/PillarCards.astro';
+import DeepSections from '../components/DeepSections.astro';
+import Footer from '../components/Footer.astro';
+---
+<Layout title="أكاديمية مِعْمَار — للنجاح الدراسي">
+  <Header />
+  <HeroBanner />
+  <PillarCards />
+  <DeepSections />
+  <Footer />
+
+  <script is:inline>
+    (function () {
+      var doc = document;
+      var TWIN_KEY = 'memaar_twin_mode_v1';
+
+      /* ---------- شارع البناء / التعمق ---------- */
+      function getTwinMode() {
+        try { var m = localStorage.getItem(TWIN_KEY); return (m === 'deepening') ? 'deepening' : 'building'; }
+        catch (e) { return 'building'; }
+      }
+      function applyTwinMode(mode) {
+        doc.querySelectorAll('[data-twin-scope]').forEach(function (el) {
+          el.setAttribute('data-twin-hidden', el.getAttribute('data-twin-scope') === mode ? 'false' : 'true');
+        });
+        doc.querySelectorAll('[data-twin-btn]').forEach(function (btn) {
+          var on = btn.getAttribute('data-twin-btn') === mode;
+          btn.setAttribute('data-active', on ? 'true' : 'false');
+          btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+      }
+      function setTwinMode(mode) {
+        try { localStorage.setItem(TWIN_KEY, mode); } catch (e) {}
+        applyTwinMode(mode);
+      }
+      doc.querySelectorAll('[data-twin-btn]').forEach(function (btn) {
+        btn.addEventListener('click', function () { setTwinMode(btn.getAttribute('data-twin-btn')); });
+      });
+
+      /* ---------- البحث (يتجاهل التشكيل والهمزات) ---------- */
+      function norm(s) {
+        return (s || '').toLowerCase()
+          .replace(/[\u064B-\u0652\u0640]/g, '')
+          .replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه')
+          .replace(/\s+/g, ' ');
+      }
+      var input = doc.getElementById('memaar-search');
+      var noRes = doc.getElementById('no-results');
+      var targets = Array.prototype.slice.call(doc.querySelectorAll('[data-search-card], [data-search-section]'));
+      var cache = targets.map(function (el) { return norm(el.textContent); });
+      if (input) {
+        input.addEventListener('input', function () {
+          var q = norm(input.value.trim()), anyCard = false;
+          targets.forEach(function (el, i) {
+            var match = q === '' || cache[i].indexOf(q) !== -1;
+            el.setAttribute('data-search-hidden', match ? 'false' : 'true');
+            if (match && el.hasAttribute('data-search-card')) anyCard = true;
+          });
+          if (noRes) noRes.classList.toggle('hidden', q === '' || anyCard);
+        });
+      }
+
+      /* ---------- القائمة الكبرى (تمرير + نقر + Escape) ---------- */
+      var megas = Array.prototype.slice.call(doc.querySelectorAll('.has-mega'));
+      function closeMegas(except) {
+        megas.forEach(function (m) {
+          if (m === except) return;
+          m.removeAttribute('data-open');
+          var t = m.querySelector('.mega-trigger'); if (t) t.setAttribute('aria-expanded', 'false');
+        });
+      }
+      megas.forEach(function (m) {
+        var t = m.querySelector('.mega-trigger');
+        if (!t) return;
+        t.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var open = m.getAttribute('data-open') === 'true';
+          closeMegas(m);
+          m.setAttribute('data-open', open ? 'false' : 'true');
+          t.setAttribute('aria-expanded', open ? 'false' : 'true');
+        });
+      });
+      doc.addEventListener('click', function () { closeMegas(null); });
+
+      /* ---------- قائمة الجوال ---------- */
+      var mBtn = doc.getElementById('mobile-menu-btn');
+      var mNav = doc.getElementById('mobile-nav');
+      function setMobile(open) {
+        if (!mBtn || !mNav) return;
+        mNav.classList.toggle('hidden', !open);
+        mBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+      if (mBtn && mNav) {
+        mBtn.addEventListener('click', function () { setMobile(mNav.classList.contains('hidden')); });
+        doc.querySelectorAll('[data-mobile-link]').forEach(function (a) {
+          a.addEventListener('click', function () { setMobile(false); });
+        });
+      }
+
+      doc.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { closeMegas(null); setMobile(false); }
+      });
+
+      applyTwinMode(getTwinMode());
+    })();
+  </script>
+</Layout>

@@ -1,0 +1,48 @@
+---
+import { memaarData, twinSlots } from '../data/memaarData';
+---
+<section class="relative px-4 lg:px-8 pt-8 pb-4">
+  <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center p-4 rounded-2xl bg-[#12141a] border border-mem-gold/35 gold-glow-soft">
+    <div><h2 class="text-lg font-bold text-mem-ivory font-thuluth">نظام جسر التوأم — شارع البناء وشارع التعمق</h2></div>
+    <div class="flex p-1 rounded-full bg-mem-black border border-mem-gold/40 mt-4 md:mt-0" role="group" aria-label="تبديل الشارع">
+      <button type="button" class="twin-btn px-4 py-2 rounded-full text-xs font-bold" data-twin-btn="building" data-active="true" aria-pressed="true">🏗️ شارع البناء</button>
+      <button type="button" class="twin-btn px-4 py-2 rounded-full text-xs font-bold" data-twin-btn="deepening" data-active="false" aria-pressed="false">🎓 شارع التعمق</button>
+    </div>
+  </div>
+</section>
+
+<main class="relative px-4 lg:px-8 pb-16">
+  <div class="max-w-7xl mx-auto space-y-12">
+    {memaarData.map((pillar) => (
+      <section id={`pillar-${pillar.id}`} class="section-anchor-offset rounded-3xl border border-mem-gold/30 bg-gradient-to-b from-[#101117] to-mem-black p-5 lg:p-8" data-search-section>
+        <header class="pb-5 border-b border-mem-burgundy/60 mb-5">
+          <h2 class="text-2xl font-bold text-gold-grad font-thuluth">{pillar.title}</h2>
+        </header>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-7">
+          {pillar.gates.map((gate) => (
+            <div class="rounded-xl border border-mem-gold/25 bg-mem-black/70 p-4">
+              <h3 class="text-sm font-bold text-mem-rose mb-2">❖ {gate.title}</h3>
+              <ul>{gate.axes.map((axis) => (<li class="text-xs text-mem-ivory/80">• {axis}</li>))}</ul>
+            </div>
+          ))}
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {twinSlots.building.map((slot) => (
+            <div class="slot-card rounded-xl border border-mem-gold/35 bg-mem-black p-4" data-twin-scope="building">
+              <span class="text-2xl" aria-hidden="true">{slot.icon}</span>
+              <p class="text-sm font-bold text-mem-ivory mt-2">{slot.label}</p>
+              <p class="text-xs text-mem-ivory/70 mt-1">{slot.desc}</p>
+            </div>
+          ))}
+          {twinSlots.deepening.map((slot) => (
+            <div class="slot-card rounded-xl border border-mem-gold/35 bg-mem-black p-4" data-twin-scope="deepening" data-twin-hidden="true">
+              <span class="text-2xl" aria-hidden="true">{slot.icon}</span>
+              <p class="text-sm font-bold text-mem-ivory mt-2">{slot.label}</p>
+              <p class="text-xs text-mem-ivory/70 mt-1">{slot.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    ))}
+  </div>
+</main>
