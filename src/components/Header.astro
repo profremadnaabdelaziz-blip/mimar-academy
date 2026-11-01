@@ -24,10 +24,10 @@ import { memaarData } from '../data/memaarData';
         <p class="text-mem-gold font-bold">المشرف العام</p>
         <p class="text-mem-ivory font-semibold">أ. رماضنة عبد العزيز</p>
       </div>
-      <span class="w-10 h-10 rounded-full border-2 border-mem-gold bg-[#12141a] flex items-center justify-center text-lg" aria-hidden="true">🧔</span>
+      <span class="w-10 h-10 rounded-full border-2 border-mem-gold bg-mem-panel flex items-center justify-center text-lg" aria-hidden="true">🧔</span>
     </div>
 
-    <button id="mobile-menu-btn" type="button" aria-label="القائمة" aria-expanded="false" aria-controls="mobile-nav"
+    <div class="hidden sm:flex items-center gap-2 shrink-0"><button type="button" data-open-palette aria-label="بحث سريع" class="h-11 px-3 flex items-center rounded-full border border-mem-gold/45 text-[11px] text-mem-gold hover:bg-mem-gold/10">Ctrl K</button><button type="button" data-theme-toggle aria-label="تبديل الوضع" class="w-11 h-11 rounded-full border border-mem-gold/60 text-mem-gold flex items-center justify-center"><span data-theme-icon>☀️</span></button></div><button id="mobile-menu-btn" type="button" aria-label="القائمة" aria-expanded="false" aria-controls="mobile-nav"
       class="lg:hidden w-11 h-11 rounded-full border border-mem-gold/60 text-mem-gold flex items-center justify-center">☰</button>
   </div>
 
@@ -62,7 +62,7 @@ import { memaarData } from '../data/memaarData';
     <ul class="p-3 space-y-2">
       {memaarData.map((pillar) => (
         <li>
-          <a href={`#pillar-${pillar.id}`} data-mobile-link class="block rounded-xl border border-mem-gold/25 bg-[#12141a] p-3 text-xs text-mem-gold">{pillar.title}</a>
+          <a href={`#pillar-${pillar.id}`} data-mobile-link class="block rounded-xl border border-mem-gold/25 bg-mem-panel p-3 text-xs text-mem-gold">{pillar.title}</a>
         </li>
       ))}
     </ul>

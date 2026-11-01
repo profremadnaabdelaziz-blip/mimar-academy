@@ -1,0 +1,46 @@
+---
+import { memaarData } from '../data/memaarData';
+const gates = memaarData.reduce((n, p) => n + p.gates.length, 0);
+const axes = memaarData.reduce((n, p) => n + p.gates.reduce((m, g) => m + g.axes.length, 0), 0);
+const stats = [
+  { n: memaarData.length, label: 'معامير', icon: '🏛️' },
+  { n: gates, label: 'بوابة', icon: '🚪' },
+  { n: axes, label: 'محور', icon: '🧭' },
+  { n: 2, label: 'شارعان: بناء وتعمق', icon: '🌉' }
+];
+---
+<section class="px-4 lg:px-8 pt-6" aria-label="حصاءات الكاديمية">
+  <div class="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
+    {stats.map((s) => (
+      <div class="rounded-2xl border border-mem-gold/30 bg-mem-panel p-4 text-center gold-glow-soft" data-reveal>
+        <div class="text-2xl" aria-hidden="true">{s.icon}</div>
+        <p class="text-3xl lg:text-4xl font-bold text-gold-grad font-thuluth mt-1" data-count={s.n}>{s.n}</p>
+        <p class="text-xs text-mem-ivory/70 mt-1">{s.label}</p>
+      </div>
+    ))}
+  </div>
+</section>
+
+<script>
+  const els = document.querySelectorAll('[data-count]');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function run(el) {
+    const target = parseInt(el.getAttribute('data-count'), 10) || 0;
+    if (reduce) { el.textContent = String(target); return; }
+    const t0 = performance.now(); const dur = 1400;
+    function step(now) {
+      const p = Math.min(1, (now - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(target * eased));
+      if (p < 1) requestAnimationFrame(step);
+    }
+    el.textContent = '0';
+    requestAnimationFrame(step);
+  }
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { io.unobserve(e.target); run(e.target); } });
+    }, { threshold: 0.4 });
+    els.forEach(function (el) { io.observe(el); });
+  }
+</script>

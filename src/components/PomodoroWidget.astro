@@ -1,0 +1,71 @@
+<div id="pomo" class="fixed left-4 bottom-20 lg:bottom-6 z-[55] flex flex-col items-start">
+  <div id="pomo-panel" class="hidden mb-3 w-64 rounded-2xl border border-mem-gold/60 bg-mem-panel p-4 shadow-2xl gold-glow-soft">
+    <div class="flex gap-2 mb-3" role="group" aria-label="نمط المؤقت">
+      <button type="button" data-pomo-mode="focus" aria-pressed="true" class="twin-btn flex-1 py-1.5 rounded-full text-xs font-bold border border-mem-gold/40" data-active="true">تركيز 25</button>
+      <button type="button" data-pomo-mode="rest" aria-pressed="false" class="twin-btn flex-1 py-1.5 rounded-full text-xs font-bold border border-mem-gold/40" data-active="false">راحة 5</button>
+    </div>
+    <p id="pomo-time" class="text-center text-5xl font-bold text-gold-grad font-thuluth my-2" aria-live="off">25:00</p>
+    <div class="flex gap-2 mt-3">
+      <button id="pomo-start" type="button" class="flex-1 h-10 rounded-lg bg-mem-gold text-mem-black text-sm font-bold">ابد</button>
+      <button id="pomo-reset" type="button" class="h-10 px-4 rounded-lg border border-mem-gold/50 text-mem-gold text-sm">عادة</button>
+    </div>
+    <p class="text-[11px] text-mem-ivory/60 text-center mt-3">جلسات تركيز اليوم: <span id="pomo-count">0</span></p>
+  </div>
+  <button id="pomo-toggle" type="button" aria-expanded="false" aria-label="مؤقت التركيز" class="h-12 px-4 rounded-full border-2 border-mem-gold bg-mem-panel text-mem-gold shadow-xl gold-glow-soft flex items-center gap-2">
+    <span aria-hidden="true">🍅</span><span id="pomo-mini" class="hidden text-sm font-bold">25:00</span>
+  </button>
+</div>
+
+<script>
+  const MODES = { focus: 25 * 60, rest: 5 * 60 };
+  const KEY = 'memaar_pomo_v1';
+  const panel = document.getElementById('pomo-panel');
+  const toggle = document.getElementById('pomo-toggle');
+  const timeE = document.getElementById('pomo-time');
+  const miniE = document.getElementById('pomo-mini');
+  const startB = document.getElementById('pomo-start');
+  const countE = document.getElementById('pomo-count');
+  const modeBtns = Array.prototype.slice.call(document.querySelectorAll('[data-pomo-mode]'));
+  let mode = 'focus', remaining = MODES.focus, endAt = 0, running = false, timer = 0;
+
+  const today = function () { return new Date().toISOString().slice(0, 10); };
+  function getCount() { try { const d = JSON.parse(localStorage.getItem(KEY) || 'null'); return d && d.date === today() ? d.n : 0; } catch (e) { return 0; } }
+  function incCount() { try { localStorage.setItem(KEY, JSON.stringify({ date: today(), n: getCount() + 1 })); } catch (e) {} countE.textContent = String(getCount()); }
+  const fmt = function (s) { return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+
+  function render() {
+    timeE.textContent = fmt(remaining);
+    miniE.textContent = fmt(remaining);
+    miniE.classList.toggle('hidden', !running && remaining === MODES[mode]);
+    startB.textContent = running ? 'يقاف مؤقت' : 'ابد';
+    modeBtns.forEach(function (b) {
+      const on = b.getAttribute('data-pomo-mode') === mode;
+      b.setAttribute('data-active', on ? 'true' : 'false');
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+  function beep() {
+    try {
+      const A = window.AudioContext || window.webkitAudioContext;
+      const a = new A(); const o = a.createOscillator(); const g = a.createGain();
+      o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.value = 0.15; o.start();
+      setTimeout(function () { o.stop(); a.close(); }, 700);
+    } catch (e) {}
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  }
+  function pause() { running = false; clearInterval(timer); render(); }
+  function setMode(m) { pause(); mode = m; remaining = MODES[m]; render(); }
+  function finish() { pause(); beep(); if (mode === 'focus') { incCount(); setMode('rest'); } else { setMode('focus'); } }
+  function tick() { remaining = Math.max(0, Math.round((endAt - Date.now()) / 1000)); render(); if (remaining <= 0) finish(); }
+  function start() { if (running) return; endAt = Date.now() + remaining * 1000; running = true; timer = setInterval(tick, 500); render(); }
+
+  toggle.addEventListener('click', function () {
+    const open = panel.classList.toggle('hidden') === false;
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  startB.addEventListener('click', function () { running ? pause() : start(); });
+  document.getElementById('pomo-reset').addEventListener('click', function () { setMode(mode); });
+  modeBtns.forEach(function (b) { b.addEventListener('click', function () { setMode(b.getAttribute('data-pomo-mode')); }); });
+  countE.textContent = String(getCount());
+  render();
+</script>

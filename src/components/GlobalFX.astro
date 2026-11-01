@@ -1,0 +1,65 @@
+<div id="scroll-progress" aria-hidden="true"></div>
+
+<script>
+  const root = document.documentElement;
+
+  function setTheme(t, persist) {
+    root.setAttribute('data-theme', t);
+    if (persist) { try { localStorage.setItem('memaar_theme', t); } catch (e) {} }
+    document.querySelectorAll('[data-theme-icon]').forEach(function (s) { s.textContent = t === 'light' ? '🌙' : '☀️'; });
+    document.querySelectorAll('[data-theme-toggle]').forEach(function (b) {
+      b.setAttribute('aria-label', t === 'light' ? 'التبديل لى الوضع الداكن' : 'التبديل لى الوضع الفاتح');
+    });
+    const m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', t === 'light' ? '#FBF6EA' : '#0D0E12');
+  }
+  document.querySelectorAll('[data-theme-toggle]').forEach(function (b) {
+    b.addEventListener('click', function () { setTheme(root.getAttribute('data-theme') === 'light' ? 'dark' : 'light', true); });
+  });
+  setTheme(root.getAttribute('data-theme') || 'dark', false);
+
+  const bar = document.getElementById('scroll-progress');
+  function onScroll() {
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    const p = h > 0 ? Math.min(1, window.scrollY / h) : 0;
+    if (bar) bar.style.transform = 'scaleX(' + p + ')';
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  const items = Array.prototype.slice.call(document.querySelectorAll('[data-reveal]'));
+  if ('IntersectionObserver' in window && items.length) {
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        const el = en.target;
+        io.unobserve(el);
+        el.classList.add('in');
+        setTimeout(function () { el.classList.remove('reveal', 'in'); el.style.transitionDelay = ''; }, 1400);
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    items.forEach(function (el, i) {
+      el.classList.add('reveal');
+      if (el.classList.contains('pillar-card')) el.style.transitionDelay = ((i % 5) * 90) + 'ms';
+      io.observe(el);
+    });
+  }
+
+  if (matchMedia('(hover: hover) and (pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll('.pillar-card').forEach(function (card) {
+      card.addEventListener('pointermove', function (e) {
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width;
+        const y = (e.clientY - r.top) / r.height;
+        card.style.setProperty('--ry', ((x - 0.5) * 10).toFixed(2) + 'deg');
+        card.style.setProperty('--rx', ((0.5 - y) * 10).toFixed(2) + 'deg');
+        card.style.setProperty('--mx', (x * 100).toFixed(1) + '%');
+        card.style.setProperty('--my', (y * 100).toFixed(1) + '%');
+      });
+      card.addEventListener('pointerleave', function () {
+        card.style.setProperty('--rx', '0deg');
+        card.style.setProperty('--ry', '0deg');
+      });
+    });
+  }
+</script>

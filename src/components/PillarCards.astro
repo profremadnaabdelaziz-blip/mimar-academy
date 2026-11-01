@@ -1,13 +1,13 @@
 ---
 import { memaarData } from '../data/memaarData';
 ---
-<section class="relative px-4 lg:px-8 pt-10 pb-6">
+<section id="pillars" class="section-anchor-offset relative px-4 lg:px-8 pt-10 pb-6">
   <div class="max-w-7xl mx-auto text-center mb-8">
     <h2 class="text-3xl font-bold text-gold-grad font-thuluth">العمارة المعرفية الشاملة للأكاديمية</h2>
   </div>
   <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5">
     {memaarData.map((pillar) => (
-      <a href={`#pillar-${pillar.id}`} class="pillar-card group rounded-2xl bg-mem-black border border-mem-gold/60 p-5 flex flex-col" data-search-card>
+      <a href={`#pillar-${pillar.id}`} class="pillar-card group rounded-2xl bg-mem-black border border-mem-gold/60 p-5 flex flex-col" data-search-card data-reveal>
         <div class="flex items-center justify-between mb-3">
           <span class="w-11 h-11 rounded-xl border border-mem-gold/60 bg-mem-burgundy/15 flex items-center justify-center text-xl text-mem-gold" aria-hidden="true">🏛️</span>
           <span class="text-[10px] font-bold text-mem-rose bg-mem-burgundy/20 px-2 py-1 rounded-full">{pillar.gates.length} بوابات</span>

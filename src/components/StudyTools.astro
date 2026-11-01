@@ -1,0 +1,152 @@
+---
+import { memaarData } from '../data/memaarData';
+const total = memaarData.reduce((n, p) => n + p.gates.length, 0);
+const wisdoms = [
+  { t: "وقل رب زدني علما", s: "سورة طه: 114" },
+  { t: "قل هل يستوي الذين يعلمون والذين لا يعلمون", s: "سورة الزمر: 9" },
+  { t: "نما يخشى الله من عباده العلماء", s: "سورة فاطر: 28" },
+  { t: "ون ليس للنسان لا ما سعىٰ", s: "سورة النجم: 39" },
+  { t: "فن مع العسر يسرا", s: "سورة الشرح: 5" },
+  { t: "ومن يتوكل على الله فهو حسبه", s: "سورة الطلاق: 3" },
+  { t: "اقر باسم ربك الذي خلق", s: "سورة العلق: 1" },
+  { t: "وقل اعملوا فسيرى الله عملكم ورسوله والمؤمنون", s: "سورة التوبة: 105" },
+  { t: "يرفع الله الذين آمنوا منكم والذين وتوا العلم درجات", s: "سورة المجادلة: 11" },
+  { t: "من سلك طريقا يلتمس فيه علما سهل الله له به طريقا لى الجنة", s: "رواه مسلم" },
+  { t: "احرص على ما ينفعك واستعن بالله ولا تعجز", s: "رواه مسلم" },
+  { t: "نعمتان مغبون فيهما كثير من الناس: الصحة والفراغ", s: "رواه البخاري" },
+  { t: "ن الله يحب ذا عمل حدكم عملا ن يتقنه", s: "رواه البيهقي" },
+  { t: "من جد وجد ومن زرع حصد", s: "من مثال العرب" }
+];
+---
+<section id="tools" class="section-anchor-offset px-4 lg:px-8 pt-10 pb-4">
+  <div class="max-w-7xl mx-auto text-center mb-6">
+    <h2 class="text-2xl lg:text-3xl font-bold text-gold-grad font-thuluth">دواتك اليومية</h2>
+    <p class="text-xs text-mem-ivory/60 mt-1">بياناتها محفوظة في متصفحك فقط</p>
+  </div>
+
+  <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-5">
+    <article class="rounded-2xl border border-mem-gold/40 bg-mem-panel p-5 gold-glow-soft" data-reveal>
+      <h3 class="text-base font-bold text-mem-ivory font-thuluth">⏳ عداد الامتحان</h3>
+      <div class="text-center my-4" aria-live="polite">
+        <p id="exam-title" class="text-sm text-mem-gold font-bold"></p>
+        <p id="exam-days" class="text-5xl font-bold text-gold-grad font-thuluth my-1">--</p>
+        <p id="exam-sub" class="text-xs text-mem-ivory/70">حدد تاريخ امتحانك لنبد العد</p>
+      </div>
+      <input id="exam-name" type="text" maxlength="40" placeholder="اسم الامتحان (مثال: البكالوريا)" aria-label="اسم الامتحان" class="w-full h-10 px-3 mb-2 rounded-lg bg-mem-black border border-mem-gold/40 text-sm text-mem-ivory placeholder-mem-ivory/40 outline-none focus:border-mem-gold" />
+      <input id="exam-date" type="date" aria-label="تاريخ الامتحان" class="w-full h-10 px-3 mb-3 rounded-lg bg-mem-black border border-mem-gold/40 text-sm text-mem-ivory outline-none focus:border-mem-gold" />
+      <div class="flex gap-2">
+        <button id="exam-save" type="button" class="flex-1 h-10 rounded-lg bg-mem-gold text-mem-black text-sm font-bold">حفظ</button>
+        <button id="exam-clear" type="button" class="h-10 px-4 rounded-lg border border-mem-gold/50 text-mem-gold text-sm">مسح</button>
+      </div>
+    </article>
+
+    <article class="rounded-2xl border border-mem-gold/40 bg-mem-panel p-5 gold-glow-soft" data-reveal>
+      <h3 class="text-base font-bold text-mem-ivory font-thuluth">✅ سجل تقدمي</h3>
+      <div id="progress-card" data-total={total} class="my-5">
+        <p class="text-center text-4xl font-bold text-gold-grad font-thuluth"><span id="progress-num">0</span> <span class="text-lg text-mem-ivory/60">/ {total}</span></p>
+        <div class="h-3 rounded-full bg-mem-black border border-mem-gold/30 mt-4 overflow-hidden" role="progressbar" aria-valuemin="0" aria-valuemax={total} aria-valuenow="0" id="progress-track">
+          <div id="progress-bar" class="h-full rounded-full bg-gradient-to-l from-mem-gold to-mem-burgundy" style="width:0%; transition: width .5s ease;"></div>
+        </div>
+        <p class="text-xs text-mem-ivory/70 text-center mt-3">علم البوابات التي تممتها بزر ✓ في كل بوابة</p>
+      </div>
+      <button id="progress-reset" type="button" class="w-full h-10 rounded-lg border border-mem-gold/50 text-mem-gold text-sm">تصفير التقدم</button>
+    </article>
+
+    <article class="rounded-2xl border border-mem-burgundy/60 bg-mem-panel p-5 gold-glow-soft" data-reveal>
+      <h3 class="text-base font-bold text-mem-ivory font-thuluth">🌙 حكمة اليوم</h3>
+      <div id="wisdom" data-items={JSON.stringify(wisdoms)} class="my-5 text-center min-h-[9rem] flex flex-col justify-center">
+        <p id="wisdom-text" class="scholar-name text-xl lg:text-2xl leading-loose">{wisdoms[0].t}</p>
+        <p id="wisdom-src" class="text-xs text-mem-rose mt-3">{wisdoms[0].s}</p>
+      </div>
+      <p class="text-[11px] text-mem-ivory/50 text-center">تتبدل تلقائيا كل يوم</p>
+    </article>
+  </div>
+</section>
+
+<script>
+  /* ----- عداد الامتحان ----- */
+  const EXAM_KEY = 'memaar_exam_v1';
+  const nameI = document.getElementById('exam-name');
+  const dateI = document.getElementById('exam-date');
+  const titleE = document.getElementById('exam-title');
+  const daysE = document.getElementById('exam-days');
+  const subE = document.getElementById('exam-sub');
+  function loadExam() { try { return JSON.parse(localStorage.getItem(EXAM_KEY) || 'null'); } catch (e) { return null; } }
+  function tickExam() {
+    const d = loadExam();
+    if (!d || !d.date) { titleE.textContent = ''; daysE.textContent = '--'; subE.textContent = 'حدد تاريخ امتحانك لنبد العد'; return; }
+    const target = new Date(d.date + 'T08:00:00');
+    titleE.textContent = d.name || 'امتحانك';
+    if (isNaN(target.getTime())) { daysE.textContent = '--'; subE.textContent = 'تاريخ غير صالح'; return; }
+    const diff = target.getTime() - Date.now();
+    if (diff <= 0) { daysE.textContent = '0'; subE.textContent = 'حان الموعد بالتوفيق والنجاح 🤲'; return; }
+    const days = Math.floor(diff / 864e5);
+    const hrs = Math.floor((diff % 864e5) / 36e5);
+    const mins = Math.floor((diff % 36e5) / 6e4);
+    daysE.textContent = String(days);
+    subE.textContent = 'يوما و ' + hrs + ' ساعة و ' + mins + ' دقيقة';
+  }
+  if (nameI && dateI) {
+    const saved = loadExam();
+    if (saved) { nameI.value = saved.name || ''; dateI.value = saved.date || ''; }
+    document.getElementById('exam-save').addEventListener('click', function () {
+      if (!dateI.value) return;
+      try { localStorage.setItem(EXAM_KEY, JSON.stringify({ name: nameI.value.trim().slice(0, 40), date: dateI.value })); } catch (e) {}
+      tickExam();
+    });
+    document.getElementById('exam-clear').addEventListener('click', function () {
+      try { localStorage.removeItem(EXAM_KEY); } catch (e) {}
+      nameI.value = ''; dateI.value = ''; tickExam();
+    });
+    tickExam();
+    setInterval(tickExam, 30000);
+  }
+
+  /* ----- سجل التقدم ----- */
+  const GATES_KEY = 'memaar_gates_v1';
+  const card = document.getElementById('progress-card');
+  if (card) {
+    const total = parseInt(card.getAttribute('data-total'), 10) || 0;
+    const num = document.getElementById('progress-num');
+    const bar = document.getElementById('progress-bar');
+    const track = document.getElementById('progress-track');
+    const checks = Array.prototype.slice.call(document.querySelectorAll('[data-gate-check]'));
+    let done = [];
+    try { done = JSON.parse(localStorage.getItem(GATES_KEY) || '[]'); } catch (e) { done = []; }
+    if (!Array.isArray(done)) done = [];
+    function save() { try { localStorage.setItem(GATES_KEY, JSON.stringify(done)); } catch (e) {} }
+    function paint() {
+      checks.forEach(function (b) { b.setAttribute('aria-pressed', done.indexOf(b.getAttribute('data-gate-check')) !== -1 ? 'true' : 'false'); });
+      const n = done.length;
+      num.textContent = String(n);
+      bar.style.width = (total ? Math.round((n / total) * 100) : 0) + '%';
+      track.setAttribute('aria-valuenow', String(n));
+    }
+    checks.forEach(function (b) {
+      b.addEventListener('click', function () {
+        const id = b.getAttribute('data-gate-check');
+        const i = done.indexOf(id);
+        if (i === -1) done.push(id); else done.splice(i, 1);
+        save(); paint();
+      });
+    });
+    document.getElementById('progress-reset').addEventListener('click', function () {
+      if (confirm('هل تريد تصفير تقدمك')) { done = []; save(); paint(); }
+    });
+    paint();
+  }
+
+  /* ----- حكمة اليوم ----- */
+  const w = document.getElementById('wisdom');
+  if (w) {
+    try {
+      const items = JSON.parse(w.getAttribute('data-items') || '[]');
+      if (items.length) {
+        const day = Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5);
+        const it = items[day % items.length];
+        document.getElementById('wisdom-text').textContent = it.t;
+        document.getElementById('wisdom-src').textContent = it.s;
+      }
+    } catch (e) {}
+  }
+</script>
