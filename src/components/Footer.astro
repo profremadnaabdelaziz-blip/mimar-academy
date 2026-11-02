@@ -1,23 +1,50 @@
 ---
-import { memaarData } from '../data/memaarData';
-const year = new Date().getFullYear();
+// src/components/Footer.astro
+// تحديث تذييل المنصة والروابط الخارجية للأكاديمية بالهوية الفخمة لعام 2026
 ---
-<footer class="border-t border-mem-gold/40 bg-mem-footer py-10 mt-8">
-  <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-8 text-center lg:text-right">
-    <div>
-      <img src="/images/memaar-logo.png" alt="شعار أكاديمية مِعْمَار" class="w-16 h-16 mx-auto lg:mx-0 object-contain mb-2" />
-      <p class="text-sm text-mem-ivory/70 font-amiri">منصة سحابية ثابتة تدمج بين العلوم الكونية والشرعية لتمكين الشباب المسلم.</p>
+
+<footer class="bg-[#0b0b0b] border-t border-[#58111a]/40 pt-12 pb-24 md:pb-12 px-6 transition-all duration-300 relative z-10">
+  <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-center text-center md:text-right">
+    
+    <!-- القسم الأول: هوية المعمار والرسالة -->
+    <div class="space-y-3">
+      <h3 class="text-[#d4af37] font-['Amiri'] text-xl font-bold tracking-wide">منصة أكاديمية مِعْمَار المعرفية</h3>
+      <p class="text-xs text-gray-400 leading-relaxed font-light font-['Cairo']">
+        بناء رواسخ العلم على بصيرة العقل وهداية الوحي — نحو جيل قيادي واعٍ ومتفوق أكاديمياً ومنهجياً.
+      </p>
     </div>
-    <div>
-      <p class="text-xs text-mem-gold mb-3">المعامير</p>
-      <ul class="grid grid-cols-2 gap-2">
-        {memaarData.map((p) => (<li><a href={`#pillar-${p.id}`} class="text-xs text-mem-ivory/70 hover:text-mem-gold">◆ {p.short}</a></li>))}
-      </ul>
+
+    <!-- القسم الثاني: بوابات التواصل الاجتماعي الفاخرة (الخانات الأفقية) -->
+    <div class="space-y-4">
+      <span class="text-[11px] text-[#d4af37] font-bold tracking-wider block uppercase font-['Cairo'] text-center">جسور التواصل والأرشيف المرئي</span>
+      <div class="flex flex-wrap justify-center gap-3">
+        <!-- رابط فيسبوك -->
+        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-[#121212] border border-[#58111a]/40 text-gray-300 hover:text-white hover:border-[#d4af37] px-4 py-2 rounded-lg text-xs font-medium font-['Cairo'] transition-all duration-300 hover:-translate-y-0.5 shadow-sm">
+          <span class="text-sm">🔵</span> فيسبوك
+        </a>
+        <!-- رابط يوتيوب -->
+        <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-[#121212] border border-[#58111a]/40 text-gray-300 hover:text-white hover:border-[#d4af37] px-4 py-2 rounded-lg text-xs font-medium font-['Cairo'] transition-all duration-300 hover:-translate-y-0.5 shadow-sm">
+          <span class="text-sm">🔴</span> يوتيوب
+        </a>
+        <!-- رابط تويتر X -->
+        <a href="https://x.com" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-[#121212] border border-[#58111a]/40 text-gray-300 hover:text-white hover:border-[#d4af37] px-4 py-2 rounded-lg text-xs font-medium font-['Cairo'] transition-all duration-300 hover:-translate-y-0.5 shadow-sm">
+          <span class="text-sm">⚫</span> منصة X
+        </a>
+        <!-- رابط تيك توك التابع لمعارج الوعي -->
+        <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-[#121212] border border-[#58111a]/40 text-gray-300 hover:text-white hover:border-[#d4af37] px-4 py-2 rounded-lg text-xs font-medium font-['Cairo'] transition-all duration-300 hover:-translate-y-0.5 shadow-sm">
+          <span class="text-sm">🎵</span> تيك توك
+        </a>
+      </div>
     </div>
-    <div>
-      <p class="text-xs text-mem-gold mb-3">الإشراف</p>
-      <p class="text-sm text-mem-ivory">الأستاذ الباحث رماضنة عبد العزيز</p>
+
+    <!-- القسم الثالث: التوثيق القانوني والتقني ومجلس الإشراف -->
+    <div class="space-y-2 text-center md:text-left text-xs text-gray-500 font-['Cairo']">
+      <p>مشروع مبرمج ومحمي ضد القرعة والنسخ العشوائي لعام 2026 م</p>
+      <p class="text-gray-400 font-medium">تحت الإشراف الكامل للأستاذ الباحث: رماضنة عبد العزيز</p>
+      <div class="inline-block mt-2 px-2.5 py-1 bg-[#121212] rounded border border-gray-800 text-[10px] font-mono text-[#d4af37]">
+        Astro v5.0 • Production Ready
+      </div>
     </div>
+
   </div>
-  <div class="text-center text-[10px] text-mem-ivory/50 mt-8">جميع الحقوق محفوظة © {year}م — أكاديمية مِعْمَار</div>
 </footer>

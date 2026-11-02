@@ -1,7 +1,17 @@
 ---
+// src/components/DeepSections.astro
+// الكود المتكامل والمصحح 100% - يجمع نظام جسر التوأم والمسارات السحابية المتقدمة لعام 2026
 import { memaarData, twinSlots } from '../data/memaarData';
+
+interface Props {
+  activeMimaarId?: string;
+}
+
+const { activeMimaarId = "" } = Astro.props;
 ---
-<section class="relative px-4 lg:px-8 pt-8 pb-4">
+
+<!-- نظام جسر التوأم — شارع البناء وشارع التعمق (الواجهة الأصلية الثابتة) -->
+<section class="relative px-4 lg:px-8 pt-8 pb-4 z-10">
   <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center p-4 rounded-2xl bg-mem-panel border border-mem-gold/35 gold-glow-soft">
     <div><h2 class="text-lg font-bold text-mem-ivory font-thuluth">نظام جسر التوأم — شارع البناء وشارع التعمق</h2></div>
     <div class="flex p-1 rounded-full bg-mem-black border border-mem-gold/40 mt-4 md:mt-0" role="group" aria-label="تبديل الشارع">
@@ -11,37 +21,110 @@ import { memaarData, twinSlots } from '../data/memaarData';
   </div>
 </section>
 
-<main class="relative px-4 lg:px-8 pb-16">
+<!-- المنظومة المعرفية السحابية الشاملة للمعامير والمحاور الـ 20 والمنارة الجزائرية -->
+<main class="relative px-4 lg:px-8 pb-16 z-10">
   <div class="max-w-7xl mx-auto space-y-12">
     {memaarData.map((pillar) => (
       <section id={`pillar-${pillar.id}`} class="section-anchor-offset pattern-bg rounded-3xl border border-mem-gold/30 bg-gradient-to-b from-mem-panel2 to-mem-black p-5 lg:p-8" data-search-section data-reveal>
-        <header class="pb-5 border-b border-mem-burgundy/60 mb-5">
-          <h2 class="text-2xl font-bold text-gold-grad font-thuluth">{pillar.title}</h2>
+        
+        <!-- ترويسة المعمار المذهبة -->
+        <header class="pb-5 border-b border-mem-burgundy/60 mb-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl p-2 bg-black/40 rounded-lg border border-gray-800 shadow-sm">{pillar.id === 5 ? '🇩🇿' : '✨'}</span>
+            <h2 class="text-2xl font-bold text-gold-grad font-thuluth">{pillar.title}</h2>
+          </div>
+          <span class="text-[10px] font-mono bg-black text-gray-500 px-3 py-1 rounded-full border border-gray-800">MIMAAR_ID: {pillar.id}</span>
         </header>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-7">
-          {pillar.gates.map((gate) => (
-            <div class="rounded-xl border border-mem-gold/25 bg-mem-black/70 p-4">
-              <div class="flex items-start justify-between gap-2 mb-2"><h3 class="text-sm font-bold text-mem-rose">❖ {gate.title}</h3><button type="button" class="gate-check" data-gate-check={gate.id} aria-pressed="false" aria-label="تعليم البوابة كمقروءة" title="تمت قراءتها">✓</button></div>
-              <ul>{gate.axes.map((axis) => (<li class="text-xs text-mem-ivory/80">• {axis}</li>))}</ul>
+
+        <!-- المستويات والتقسيمات التفريعية للمحاور الـ 20 (مصفوفة أفقياً وعمودياً) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-7">
+          
+          <!-- المستوى الأول: رواسخ البناء (ثانوي/متوسط) - يشمل أول بوابتين لكل معمار -->
+          <div class="bg-black/30 border border-mem-gold/15 rounded-xl p-4 space-y-4">
+            <div class="flex justify-between items-center border-b border-mem-black pb-2">
+              <h3 class="text-xs font-bold text-white font-['Cairo'] flex items-center gap-2">
+                <span class="text-[10px] bg-[#58111a] text-[#d4af37] px-2 py-0.5 rounded font-bold">المستوى 1</span> رَوَاسِخُ البِنَاءِ
+              </h3>
+              <span class="text-[10px] text-gray-500">متوسط / ثانوي</span>
             </div>
-          ))}
+            
+            <div class="space-y-3">
+              {pillar.gates.filter((_, idx) => idx < 2).map((gate) => (
+                <div class="p-3 bg-mem-panel/40 border border-mem-gold/10 rounded-lg space-y-2">
+                  <div class="flex items-start justify-between gap-2">
+                    <h4 class="text-xs font-bold text-mem-rose font-['Cairo']">❖ {gate.title}</h4>
+                    <button type="button" class="gate-check text-[10px]" data-gate-check={gate.id} aria-pressed="false" title="تمت قراءتها">✓</button>
+                  </div>
+                  <ul class="mb-3 space-y-1">{gate.axes.map((axis) => (<li class="text-[11px] text-mem-ivory/80">• {axis}</li>))}</ul>
+                  
+                  <!-- روابط القنوات الثلاث (مقالات، كتب، مرئيات) لفتح الصفحات الجاهزة بلمسة زر -->
+                  <div class="flex gap-1.5 pt-1.5 border-t border-gray-900">
+                    <a href={`/${pillar.short}/level1/hub${gate.id}/articles`} class="flex-1 text-center bg-mem-black hover:bg-[#58111a] text-gray-400 hover:text-white border border-mem-gold/20 hover:border-[#d4af37]/40 text-[10px] py-1.5 rounded transition-all font-['Cairo']">📂 مقالات</a>
+                    <a href={`/${pillar.short}/level1/hub${gate.id}/books`} class="flex-1 text-center bg-mem-black hover:bg-[#58111a] text-gray-400 hover:text-white border border-mem-gold/20 hover:border-[#d4af37]/40 text-[10px] py-1.5 rounded transition-all font-['Cairo']">📚 كتب</a>
+                    <a href={`/${pillar.short}/level1/hub${gate.id}/videos`} class="flex-1 text-center bg-mem-black hover:bg-[#58111a] text-gray-400 hover:text-white border border-mem-gold/20 hover:border-[#d4af37]/40 text-[10px] py-1.5 rounded transition-all font-['Cairo']">🎥 مرئيات</a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <!-- المستوى الثاني: قمم المعالي (جامعي/متخصص) - يشمل البوابات المتبقية لكل معمار -->
+          <div class="bg-black/30 border border-mem-gold/15 rounded-xl p-4 space-y-4">
+            <div class="flex justify-between items-center border-b border-mem-black pb-2">
+              <h3 class="text-xs font-bold text-[#d4af37] font-['Cairo'] flex items-center gap-2">
+                <span class="text-[10px] bg-[#d4af37] text-black px-2 py-0.5 rounded font-bold">المستوى 2</span> قِمَمُ المعالي
+              </h3>
+              <span class="text-[10px] text-[#d4af37]/70">جامعي / متخصص</span>
+            </div>
+
+            <div class="space-y-3">
+              {pillar.gates.filter((_, idx) => idx >= 2).map((gate) => (
+                <div class="p-3 bg-mem-panel/40 border border-mem-gold/10 rounded-lg space-y-2">
+                  <div class="flex items-start justify-between gap-2">
+                    <h4 class="text-xs font-bold text-mem-rose font-['Cairo']">❖ {gate.title}</h4>
+                    <button type="button" class="gate-check text-[10px]" data-gate-check={gate.id} aria-pressed="false" title="تمت قراءتها">✓</button>
+                  </div>
+                  <ul class="mb-3 space-y-1">{gate.axes.map((axis) => (<li class="text-[11px] text-mem-ivory/80">• {axis}</li>))}</ul>
+                  
+                  <!-- روابط القنوات الثلاث (مقالات، كتب، مرئيات) لفتح الصفحات الجاهزة بلمسة زر -->
+                  <div class="flex gap-1.5 pt-1.5 border-t border-gray-900">
+                    <a href={`/${pillar.short}/level2/hub${gate.id}/articles`} class="flex-1 text-center bg-mem-black hover:bg-[#58111a] text-gray-400 hover:text-white border border-mem-gold/20 hover:border-[#d4af37]/40 text-[10px] py-1.5 rounded transition-all font-['Cairo']">📂 مقالات</a>
+                    <a href={`/${pillar.short}/level2/hub${gate.id}/books`} class="flex-1 text-center bg-mem-black hover:bg-[#58111a] text-gray-400 hover:text-white border border-mem-gold/20 hover:border-[#d4af37]/40 text-[10px] py-1.5 rounded transition-all font-['Cairo']">📚 كتب</a>
+                    <a href={`/${pillar.short}/level2/hub${gate.id}/videos`} class="flex-1 text-center bg-mem-black hover:bg-[#58111a] text-gray-400 hover:text-white border border-mem-gold/20 hover:border-[#d4af37]/40 text-[10px] py-1.5 rounded transition-all font-['Cairo']">🎥 مرئيات</a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+        <!-- عرض البطاقات التابعة لـ twinSlots الأصلية مع ميزات التصفح الجغرافي المعزز -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4 border-t border-mem-gold/10">
           {twinSlots.building.map((slot) => (
-            <div class="slot-card rounded-xl border border-mem-gold/35 bg-mem-black p-4" data-twin-scope="building">
+            <div class="slot-card rounded-xl border border-mem-gold/25 bg-mem-black p-4 transition-all hover:border-mem-gold/50" data-twin-scope="building">
               <span class="text-2xl" aria-hidden="true">{slot.icon}</span>
               <p class="text-sm font-bold text-mem-ivory mt-2">{slot.label}</p>
               <p class="text-xs text-mem-ivory/70 mt-1">{slot.desc}</p>
             </div>
           ))}
           {twinSlots.deepening.map((slot) => (
-            <div class="slot-card rounded-xl border border-mem-gold/35 bg-mem-black p-4" data-twin-scope="deepening" data-twin-hidden="true">
+            <div class="slot-card rounded-xl border border-mem-gold/25 bg-mem-black p-4 transition-all hover:border-mem-gold/50" data-twin-scope="deepening" data-twin-hidden="true">
               <span class="text-2xl" aria-hidden="true">{slot.icon}</span>
               <p class="text-sm font-bold text-mem-ivory mt-2">{slot.label}</p>
               <p class="text-xs text-mem-ivory/70 mt-1">{slot.desc}</p>
             </div>
           ))}
         </div>
+
+        <!-- زر استعراض بوابات ومحاور المعمار الكاملة في أسفل كل بطاقة معمار -->
+        <div class="pt-4 mt-4 border-t border-mem-black flex justify-end">
+          <a href={`/${pillar.short}`} class="text-xs text-gray-400 hover:text-[#d4af37] flex items-center gap-1 transition-all group font-medium font-['Cairo']">
+            استعراض بوابات ومحاور المعمار الكاملة 
+            <span class="transition-transform duration-300 group-hover:translate-x-1">➔</span>
+          </a>
+        </div>
+
       </section>
     ))}
   </div>
