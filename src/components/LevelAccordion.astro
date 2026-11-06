@@ -1,0 +1,92 @@
+---
+// src/components/LevelAccordion.astro
+// محرك التعميق الداخلي: طي المستويات وإظهار الفلاتر الدقيقة عند النقر حصراً
+export interface Props {
+  levelId: string;
+  levelTitle: string;
+  itemCounts: {
+    article: number;
+    book: number;
+    video: number;
+  };
+}
+
+const { levelId, levelTitle, itemCounts } = Astro.props;
+---
+
+<div class="level-accordion-wrapper rounded-2xl border border-[#d4af37]/30 bg-[#12141a] overflow-hidden mb-4 shadow-lg transition-all duration-300">
+  <!-- رأس المستوى (زر التفاعل المباشر) -->
+  <button
+    type="button"
+    data-level-toggle={levelId}
+    aria-expanded="false"
+    class="w-full flex items-center justify-between p-5 text-right font-amiri text-lg font-bold text-white transition-colors hover:text-[#d4af37] focus:outline-none"
+  >
+    <span class="flex items-center gap-3">
+      <span class="h-3 w-3 rounded-full bg-[#d4af37] shadow-[0_0_12px_rgba(212,175,55,0.6)]"></span>
+      <span>{levelTitle}</span>
+    </span>
+    <span class="text-xs text-[#d4af37] transition-transform duration-300 transform" data-arrow aria-hidden="true">▼</span>
+  </button>
+
+  <!-- محتوى المستوى المخفي افتراضياً (يُكشف ديناميكياً في العمق فقط) -->
+  <div data-level-content hidden class="border-t border-white/10 p-5 bg-black/40 space-y-4">
+    <p class="text-xs text-white/60 font-['Cairo']">
+      اختر مسار التصفية المعرفية المطلوب للولوج إلى محتوى هذا المستوى:
+    </p>
+
+    <!-- الفلاتر المخفية أصلاً عن الصفحة الرئيسية -->
+    <div class="flex flex-wrap gap-2.5" role="group" aria-label="فلاتر الأنواع المعمقة">
+      <a
+        href={`?level=${levelId}&type=article`}
+        class="inline-flex items-center gap-1.5 rounded-xl border border-[#d4af37]/35 bg-[#d4af37]/10 px-3.5 py-2 text-xs font-bold text-[#d4af37] transition-all hover:bg-[#d4af37] hover:text-[#0d0d0d]"
+      >
+        <span>📄 مقالات</span>
+        <span class="rounded-full bg-black/30 px-2 py-0.5 text-[10px] text-white/90">({itemCounts.article})</span>
+      </a>
+
+      <a
+        href={`?level=${levelId}&type=book`}
+        class="inline-flex items-center gap-1.5 rounded-xl border border-[#d4af37]/35 bg-[#d4af37]/10 px-3.5 py-2 text-xs font-bold text-[#d4af37] transition-all hover:bg-[#d4af37] hover:text-[#0d0d0d]"
+      >
+        <span>📚 كتب</span>
+        <span class="rounded-full bg-black/30 px-2 py-0.5 text-[10px] text-white/90">({itemCounts.book})</span>
+      </a>
+
+      <a
+        href={`?level=${levelId}&type=video`}
+        class="inline-flex items-center gap-1.5 rounded-xl border border-[#d4af37]/35 bg-[#d4af37]/10 px-3.5 py-2 text-xs font-bold text-[#d4af37] transition-all hover:bg-[#d4af37] hover:text-[#0d0d0d]"
+      >
+        <span>🎥 مرئيات</span>
+        <span class="rounded-full bg-black/30 px-2 py-0.5 text-[10px] text-white/90">({itemCounts.video})</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initLevelAccordions() {
+    document.querySelectorAll('[data-level-toggle]').forEach((btn) => {
+      if (btn.hasAttribute('data-initialized')) return;
+      btn.setAttribute('data-initialized', 'true');
+
+      btn.addEventListener('click', () => {
+        const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!isExpanded));
+
+        const content = btn.nextElementSibling as HTMLElement;
+        const arrow = btn.querySelector('[data-arrow]') as HTMLElement;
+
+        if (content) {
+          content.hidden = isExpanded;
+          if (arrow) {
+            arrow.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(180deg)';
+          }
+        }
+      });
+    });
+  }
+
+  // دعم انتقال الصفحات السلس في Astro
+  document.addEventListener('astro:page-load', initLevelAccordions);
+</script>

@@ -1,269 +1,304 @@
 ---
-import { ViewTransitions } from 'astro:transitions';
-import { memaarData } from '../../../../../../data/memaarData';
-import '../../../../../../styles/global.css';
-
-const portals = [
-  { slug: 'resala', title: 'مِعْمَار الرِّسَالَة', subtitle: 'الهوية والإيمان والأخلاق', index: 0 },
-  { slug: 'zaat', title: 'مِعْمَار الذَّات', subtitle: 'النفس والدافعية والصلابة', index: 1 },
-  { slug: 'itqan', title: 'مِعْمَار الإتْقَان', subtitle: 'التعلم والتفوق الأكاديمي', index: 2 },
-  { slug: 'quwa', title: 'مِعْمَار القُوَّة', subtitle: 'الثقافة والوقت والقدوات', index: 3 },
-  { slug: 'manara', title: 'مِعْمَار المَنَارَة', subtitle: 'المسار الوطني ورعاية الأسرة', index: 4 },
-] as const;
-
-const levels = {
-  level1: 'رَوَاسِخُ البِنَاءِ',
-  level2: 'قِمَمُ المعالي',
-} as const;
-
-const contentTypes = ['article', 'book', 'video', 'tree'] as const;
-const contentLabels = {
-  article: { title: 'المقالات والأبحاث', icon: '▤', kind: 'مقال معرفي' },
-  book: { title: 'الكتب والطروحات', icon: '▥', kind: 'كتاب ومرجع' },
-  video: { title: 'المرئيات والدروس', icon: '▷', kind: 'درس مرئي' },
-  tree: { title: 'الشجرة المعرفية', icon: '⌘', kind: 'خريطة معرفية' },
-} as const;
+// src/pages/[mimaarId]/level/[levelId]/hub/[hubId]/[contentType].astro
+import AcademyLayout from '../../../../../../layouts/AcademyLayout.astro';
+import { memaarData, getPortal, getHub } from '../../../../../../data/memaarData';
+import {
+  levels,
+  contentLabels,
+  contentTypes,
+  levelIds,
+  hubUrl,
+  type ContentType,
+  type LevelId,
+} from '../../../../../../data/memaarConfig';
+import { getItems, getTree, countFor } from '../../../../../../data/memaarContent';
 
 export function getStaticPaths() {
-  const routePortals = [
-    { slug: 'resala', index: 0 },
-    { slug: 'zaat', index: 1 },
-    { slug: 'itqan', index: 2 },
-    { slug: 'quwa', index: 3 },
-    { slug: 'manara', index: 4 },
-  ];
-  const routeLevels = ['level1', 'level2'];
-  const routeContentTypes = ['article', 'book', 'video', 'tree'];
-
-  return routePortals.flatMap((portal) => {
-    const hubs = memaarData[portal.index].gates;
-    return routeLevels.flatMap((levelId) =>
-      hubs.flatMap((hub) =>
-        routeContentTypes.map((contentType) => ({
-          params: {
-            mimaarId: portal.slug,
-            levelId,
-            hubId: String(hub.id),
-            contentType,
-          },
+  return memaarData.flatMap((portal) =>
+    portal.gates.flatMap((hub) =>
+      levelIds.flatMap((levelId) =>
+        contentTypes.map((contentType) => ({
+          params: { mimaarId: portal.slug, levelId, hubId: String(hub.id), contentType },
         })),
       ),
-    );
-  });
+    ),
+  );
 }
 
 const { mimaarId, levelId, hubId, contentType } = Astro.params;
-const portal = portals.find((item) => item.slug === mimaarId);
-const level = levelId === 'level1' ? levels.level1 : levelId === 'level2' ? levels.level2 : undefined;
-const hub = portal && memaarData[portal.index].gates.find((item) => String(item.id) === hubId);
-const selectedType = contentType && contentTypes.find((item) => item === contentType);
 
-if (!portal || !level || !hub || !selectedType) {
-  throw new Error('Invalid academy route: portal, level, hub, or content type was not found.');
+const portal = getPortal(mimaarId);
+const gates = portal?.gates ?? [];
+const hub = getHub(portal, hubId);
+const levelKey = levelIds.find((l) => l === levelId) as LevelId | undefined;
+const selectedType = contentTypes.find((t) => t === contentType) as ContentType | undefined;
+
+if (!portal || !hub || !levelKey || !selectedType) {
+  throw new Error(`Invalid academy route: ${mimaarId}/${levelId}/${hubId}/${contentType}`);
 }
 
-const axes = hub.axes;
+const levelTitle = levels[levelKey];
+const axes = hub.axes ?? [];
 const hubSummary = axes.join('، ');
-const cards = contentTypes.map((type) => ({
-  type,
-  ...contentLabels[type],
-  title: `${hub.title} — ${contentLabels[type].kind}`,
-  summary: type === 'tree'
-    ? `تتفرع هذه الشجرة من محور البوابة: ${hubSummary}`
-    : `استكشف ${hub.title} من خلال ${contentLabels[type].title}. ${axes[0] ?? ''}`,
-  executiveSummary: `الخلاصة التنفيذية: ${hubSummary}`,
-}));
+
+const cards = contentTypes.map((type) => {
+  const meta = contentLabels[type];
+  return {
+    type,
+    ...meta,
+    cardTitle: `${hub.title} — ${meta.kind}`,
+    summary:
+      type === 'tree'
+        ? `تتفرع هذه الشجرة من محاور البوابة: ${hubSummary}`
+        : `استكشف ${hub.title} من خلال ${meta.title}. ${axes[0] ?? ''}`,
+    executive: `الخلاصة التنفيذية داخل المستوى: ${hubSummary}`,
+    count: countFor(hub, type),
+    href: hubUrl(portal.slug, levelKey, hub.id, type),
+    active: type === selectedType,
+  };
+});
+
+const featured = cards.find((c) => c.active)!;
+const others = cards.filter((c) => !c.active);
+
+const items = selectedType === 'tree' ? [] : getItems(hub, selectedType);
+const tree = selectedType === 'tree' ? getTree(hub) : [];
+const hasContent = items.length > 0 || tree.length > 0;
+
+const hubIndex = gates.findIndex((g) => g === hub);
+const prevHub = gates[hubIndex - 1];
+const nextHub = gates[hubIndex + 1];
 ---
 
-<!doctype html>
-<html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0d0d0d" />
-    <title>{hub.title} | {portal.title} — أكاديمية مِعْمَار</title>
-    <ViewTransitions />
-  </head>
-  <body
-    class="min-h-screen bg-[#0d0d0d] font-traditional text-white antialiased selection:bg-[#58111a] selection:text-white"
-    data-passport={JSON.stringify({ mimaarId, levelId, hubId, contentType })}
+<AcademyLayout
+  title={`${hub.title} | ${portal.title} — أكاديمية مِعْمَار`}
+  description={hubSummary || `${hub.title} — ${levelTitle}`}
+>
+  <a slot="header-start" href="/" class="text-sm font-bold text-[#d4af37] transition-colors hover:text-white">← الرئيسية</a>
+  <span slot="header-end" class="hidden text-xs text-white/60 sm:inline">{portal.title}</span>
+
+  <main
+    class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12"
+    id="hub-main"
+    data-last-href={Astro.url.pathname}
+    data-last-title={`${hub.title} — ${levelTitle}`}
   >
-    <div class="min-h-screen">
-      <header class="border-b border-[#d4af37]/25 bg-[#0d0d0d]/90 backdrop-blur-xl">
-        <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <a href="/" class="text-sm font-bold text-[#d4af37] transition-colors hover:text-white" transition:name="academy-brand">
-            أكاديمية مِعْمَار
-          </a>
+    <nav aria-label="مسار الطالب" class="mb-8">
+      <ol class="flex flex-wrap items-center gap-2 text-xs text-white/55">
+        <li><a href="/" class="transition hover:text-[#d4af37]">الرئيسية</a></li>
+        <li aria-hidden="true">/</li>
+        <li class="text-[#d4af37]">{portal.title}</li>
+        <li aria-hidden="true">/</li>
+        <li>{levelTitle}</li>
+        <li aria-hidden="true">/</li>
+        <li aria-current="page" class="text-white/85">{hub.title}</li>
+      </ol>
+    </nav>
+
+    <section class="mb-8 border-r-2 border-[#d4af37] pr-5 sm:pr-7">
+      <p class="mb-2 text-xs font-bold text-[#d4af37]">{portal.subtitle}</p>
+      <h1 class="font-amiri text-3xl font-bold leading-tight text-[#d4af37] sm:text-5xl">{hub.title}</h1>
+      {hubSummary && <p class="mt-4 max-w-2xl text-sm leading-8 text-white/75">{hubSummary}</p>}
+    </section>
+
+    <div class="mb-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div class="inline-flex w-fit rounded-full border border-[#d4af37]/30 bg-black/40 p-1" role="group" aria-label="المستوى">
+        {levelIds.map((id) => (
           <a
-            id="passport-resume"
-            href="/"
-            class="rounded-full border border-[#d4af37]/40 px-4 py-2 text-xs text-white/75 transition hover:border-[#d4af37] hover:text-[#d4af37]"
+            href={hubUrl(portal.slug, id, hub.id, selectedType)}
+            aria-current={id === levelKey ? 'page' : undefined}
+            class={`rounded-full px-4 py-1.5 text-xs transition-all ${
+              id === levelKey ? 'bg-[#d4af37] font-bold text-black shadow-md' : 'text-white/70 hover:text-[#d4af37]'
+            }`}
           >
-            استئناف المسار
+            {levels[id]}
           </a>
-        </div>
-      </header>
+        ))}
+      </div>
 
-      <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-        <nav aria-label="مسار الطالب" class="mb-8 flex flex-wrap items-center gap-2 text-xs text-white/55">
-          <a href="/" class="transition hover:text-[#d4af37]">الرئيسية</a>
-          <span aria-hidden="true">/</span>
-          <span class="text-[#d4af37]">{portal.title}</span>
-          <span aria-hidden="true">/</span>
-          <span>{level}</span>
-          <span aria-hidden="true">/</span>
-          <span>{hub.title}</span>
-        </nav>
-
-        <section class="mb-8 border-r-2 border-[#d4af37] pr-5 sm:mb-10 sm:pr-7" aria-labelledby="hub-heading">
-          <p class="mb-2 text-xs font-bold tracking-wide text-[#d4af37]">{portal.title} <span class="px-1 text-white/35">•</span> {level}</p>
-          <h1 id="hub-heading" class="font-amiri text-3xl font-bold leading-tight text-[#d4af37] sm:text-4xl">{hub.title}</h1>
-          <p class="mt-3 max-w-3xl text-sm leading-7 text-white/75 sm:text-base">{hubSummary}</p>
-          <div class="mt-5 flex flex-wrap gap-2" aria-label="أنواع المحتوى">
-            {contentTypes.map((type) => (
-              <a
-                href={`/${portal.slug}/level/${levelId}/hub/${hub.id}/${type}`}
-                aria-current={type === selectedType ? 'page' : undefined}
-                class:list={[
-                  'rounded-full border px-3 py-2 text-xs transition-colors',
-                  type === selectedType
-                    ? 'border-[#d4af37] bg-[#d4af37] font-bold text-[#0d0d0d]'
-                    : 'border-white/15 text-white/70 hover:border-[#d4af37]/60 hover:text-[#d4af37]',
-                ]}
-                transition:animate="fade"
-              >
-                {contentLabels[type].title}
-              </a>
-            ))}
-          </div>
-        </section>
-
-        <section aria-label="المحتوى المعرفي" class="grid auto-rows-[minmax(13rem,auto)] grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {cards.map((card, index) => (
-            <article
-              class:list={[
-                'group relative flex flex-col overflow-hidden rounded-2xl border bg-white/[0.035] p-5 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:bg-white/[0.06] sm:p-6',
-                card.type === selectedType ? 'border-[#d4af37]/65 shadow-[0_12px_42px_rgba(212,175,55,0.08)]' : 'border-white/10 hover:border-[#d4af37]/40',
-                index === 0 ? 'sm:col-span-2 sm:row-span-2' : '',
-              ]}
-              transition:name={`knowledge-card-${card.type}`}
-            >
-              <div class="flex items-start justify-between gap-3">
-                <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-[#d4af37]/25 bg-[#d4af37]/[0.07] text-xl text-[#d4af37]" aria-hidden="true">{card.icon}</span>
-                <span class="rounded-full bg-[#58111a]/60 px-3 py-1 text-[10px] font-bold text-white/85">{card.kind}</span>
-              </div>
-              <h2 class="mt-5 font-amiri text-xl font-bold leading-relaxed text-white sm:text-2xl">{card.title}</h2>
-              <p class="mt-3 text-sm leading-7 text-white/65">{card.summary}</p>
-              <div class="mt-auto pt-5">
-                <button
-                  type="button"
-                  class="w-full rounded-xl border border-[#d4af37]/35 px-4 py-3 text-xs font-bold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#0d0d0d] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d4af37]"
-                  onclick="window.openQuickPeek(this)"
-                  data-preview-title={card.title}
-                  data-preview-summary={card.summary}
-                  data-preview-executive={card.executiveSummary}
-                >
-                  معاينة سريعة
-                </button>
-              </div>
-            </article>
-          ))}
-        </section>
-
-        <p id="passport-status" class="sr-only" aria-live="polite"></p>
-      </main>
+      <nav aria-label="نوع المحتوى" class="flex flex-wrap gap-2">
+        {cards.map((c) => (
+          <a
+            href={c.href}
+            aria-current={c.active ? 'page' : undefined}
+            class={`rounded-full border px-4 py-2 text-xs transition-all ${
+              c.active
+                ? 'border-[#d4af37] bg-[#d4af37] font-bold text-black'
+                : 'border-white/15 text-white/70 hover:border-[#d4af37]/60 hover:text-[#d4af37]'
+            }`}
+          >
+            <span aria-hidden="true" class="ml-1.5">{c.icon}</span>{c.title}
+            {c.count > 0 && <span class="mr-1.5 text-[10px] opacity-70">({c.count})</span>}
+          </a>
+        ))}
+      </nav>
     </div>
 
-    <dialog
-      id="quick-peek"
-      class="m-auto w-[calc(100%-2rem)] max-w-xl rounded-3xl border border-[#d4af37]/35 bg-[#111]/95 p-0 text-white shadow-2xl backdrop:bg-black/75 backdrop:backdrop-blur-md"
-      aria-labelledby="quick-peek-title"
-    >
-      <div class="p-6 sm:p-8">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <p class="mb-2 text-xs font-bold text-[#d4af37]">معاينة معرفية</p>
-            <h2 id="quick-peek-title" class="font-amiri text-2xl font-bold text-white"></h2>
-          </div>
-          <button type="button" onclick="window.closeQuickPeek()" aria-label="إغلاق المعاينة" class="rounded-full border border-white/15 px-3 py-1 text-lg text-white/70 transition hover:border-[#d4af37] hover:text-[#d4af37]">×</button>
-        </div>
-        <p id="quick-peek-summary" class="mt-5 text-sm leading-7 text-white/75"></p>
-        <div class="mt-6 rounded-2xl border border-[#d4af37]/25 bg-[#d4af37]/[0.06] p-5">
-          <p class="mb-2 text-xs font-bold text-[#d4af37]">الخلاصة التنفيذية</p>
-          <p id="quick-peek-executive" class="text-sm leading-7 text-white/80"></p>
-        </div>
+    <article class="mb-6 rounded-3xl border border-[#d4af37]/40 bg-white/[0.04] p-6 sm:p-9" transition:name="featured-card">
+      <div class="mb-5 flex items-center justify-between">
+        <span class="flex h-12 w-12 items-center justify-center rounded-xl border border-[#d4af37]/40 bg-[#d4af37]/10 text-xl text-[#d4af37]" aria-hidden="true">{featured.icon}</span>
+        <span class="rounded-full border border-[#d4af37]/30 bg-[#d4af37]/10 px-3 py-1 text-[11px] font-bold text-[#d4af37]">{featured.kind}</span>
       </div>
-    </dialog>
+      <h2 class="mb-3 font-amiri text-2xl font-bold sm:text-3xl text-white">{featured.cardTitle}</h2>
+      <p class="mb-7 max-w-2xl text-sm leading-8 text-white/75">{featured.summary}</p>
 
-    <script>
-      declare global {
-        interface Window {
-          openQuickPeek: (button: HTMLElement) => void;
-          closeQuickPeek: () => void;
-        }
-      }
+      <div class="rounded-2xl border border-[#d4af37]/30 bg-[#d4af37]/10 p-4">
+        <p class="mb-1 text-xs font-bold text-[#d4af37]">الخلاصة التنفيذية</p>
+        <p class="text-sm leading-7 text-white/90">{featured.executive}</p>
+      </div>
 
-      window.openQuickPeek = (button) => {
-        const dialog = document.querySelector<HTMLDialogElement>('#quick-peek');
-        const title = document.querySelector<HTMLElement>('#quick-peek-title');
-        const summary = document.querySelector<HTMLElement>('#quick-peek-summary');
-        const executive = document.querySelector<HTMLElement>('#quick-peek-executive');
-        if (!dialog || !title || !summary || !executive) {
-          throw new Error('The knowledge preview dialog is missing required elements.');
-        }
-        title.textContent = button.dataset.previewTitle ?? '';
-        summary.textContent = button.dataset.previewSummary ?? '';
-        executive.textContent = button.dataset.previewExecutive ?? '';
-        dialog.showModal();
-      };
+      <div class="mt-8 border-t border-white/10 pt-6">
+        {!hasContent && (
+          <p class="text-sm leading-7 text-white/55">لم يُضف محتوى لهذه الخانة بعد. سيظهر هنا فور إضافته.</p>
+        )}
 
-      window.closeQuickPeek = () => document.querySelector<HTMLDialogElement>('#quick-peek')?.close();
-      document.addEventListener('click', (event) => {
-        const dialog = document.querySelector<HTMLDialogElement>('#quick-peek');
-        if (dialog && event.target === dialog) dialog.close();
-      });
+        {items.length > 0 && (
+          <ul class="grid gap-3">
+            {items.map((item) => {
+              const Tag = item.href ? 'a' : 'div';
+              return (
+                <li>
+                  <Tag
+                    href={item.href}
+                    class={`block rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-colors ${item.href ? 'hover:border-[#d4af37]/50' : ''}`}
+                  >
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                      <h3 class="font-amiri text-lg font-bold text-white">{item.title}</h3>
+                      {item.duration && <span class="text-[11px] text-white/50">{item.duration}</span>}
+                    </div>
+                    {item.author && <p class="mt-1 text-xs text-[#d4af37]">{item.author}</p>}
+                    {item.summary && <p class="mt-2 text-sm leading-7 text-white/65">{item.summary}</p>}
+                  </Tag>
+                </li>
+              );
+            })}
+          </ul>
+        )}
 
-      const passportKey = 'memaar:route-passport';
-      const previousPassportKey = 'memaar:previous-route-passport';
+        {tree.length > 0 && (
+          <ul class="space-y-3 text-sm">
+            {tree.map((root) => (
+              <li>
+                <p class="font-amiri text-lg font-bold text-[#d4af37]">{root.title}</p>
+                {root.children && (
+                  <ul class="mr-3 mt-2 space-y-2 border-r border-[#d4af37]/30 pr-4">
+                    {root.children.map((branch) => (
+                      <li>
+                        <p class="font-bold text-white/90">{branch.title}</p>
+                        {branch.children && (
+                          <ul class="mr-3 mt-1.5 space-y-1 border-r border-white/15 pr-4 text-white/65">
+                            {branch.children.map((leaf) => (
+                              <li>{leaf.href ? <a href={leaf.href} class="hover:text-[#d4af37]">{leaf.title}</a> : leaf.title}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </article>
 
-      function syncPassport() {
-        const currentPassport = document.body.dataset.passport;
-        const status = document.querySelector<HTMLElement>('#passport-status');
-        const resumeLink = document.querySelector<HTMLAnchorElement>('#passport-resume');
-        if (!currentPassport) {
-          throw new Error('The current academy route passport is missing.');
-        }
+    <section aria-label="خانات أخرى في هذا المحور" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {others.map((c) => (
+        <article class="flex flex-col justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-[#d4af37]/40">
+          <div>
+            <div class="mb-3 flex items-center justify-between">
+              <span class="text-lg text-[#d4af37]" aria-hidden="true">{c.icon}</span>
+              <span class="text-[10px] text-white/55">{c.count > 0 ? `${c.count} عناصر` : c.kind}</span>
+            </div>
+            <h3 class="mb-2 font-amiri text-lg font-bold text-white">{c.title}</h3>
+            <p class="mb-5 line-clamp-3 text-xs leading-7 text-white/60">{c.summary}</p>
+          </div>
+          <div class="flex gap-2">
+            <a href={c.href} class="flex-1 rounded-xl bg-[#d4af37] px-3 py-2 text-center text-xs font-bold text-black transition hover:bg-white">فتح الخانة</a>
+            <button
+              type="button"
+              data-peek
+              data-title={c.cardTitle}
+              data-summary={c.summary}
+              data-executive={c.executive}
+              class="rounded-xl border border-[#d4af37]/40 px-3 py-2 text-xs font-bold text-[#d4af37] transition hover:bg-[#d4af37]/10"
+            >
+              معاينة
+            </button>
+          </div>
+        </article>
+      ))}
+    </section>
 
+    {(prevHub || nextHub) && (
+      <nav aria-label="المحاور المجاورة" class="mt-12 flex items-center justify-between gap-4 border-t border-white/10 pt-6 text-sm">
+        {nextHub ? (
+          <a href={hubUrl(portal.slug, levelKey, nextHub.id, selectedType)} class="text-white/70 transition hover:text-[#d4af37]">→ {nextHub.title}</a>
+        ) : <span />}
+        {prevHub ? (
+          <a href={hubUrl(portal.slug, levelKey, prevHub.id, selectedType)} class="text-white/70 transition hover:text-[#d4af37]">{prevHub.title} ←</a>
+        ) : <span />}
+      </nav>
+    )}
+  </main>
+
+  <dialog
+    id="quick-peek"
+    aria-labelledby="quick-peek-title"
+    class="m-auto w-[calc(100%-2rem)] max-w-xl rounded-3xl border border-[#d4af37]/40 bg-[#0d0d0d] p-6 text-white shadow-2xl backdrop:bg-black/75"
+  >
+    <div class="mb-4 flex items-start justify-between gap-4">
+      <div>
+        <p class="mb-1 text-xs font-bold text-[#d4af37]">معاينة سريعة</p>
+        <h2 id="quick-peek-title" class="font-amiri text-2xl font-bold"></h2>
+      </div>
+      <button type="button" data-peek-close aria-label="إغلاق" class="rounded-full border border-white/15 px-3 py-1 text-lg text-white/70 transition hover:text-[#d4af37]">×</button>
+    </div>
+    <p id="quick-peek-summary" class="mb-4 text-sm leading-7 text-white/75"></p>
+    <div class="rounded-2xl border border-[#d4af37]/30 bg-[#d4af37]/10 p-4">
+      <p class="mb-1 text-xs font-bold text-[#d4af37]">الخلاصة التنفيذية</p>
+      <p id="quick-peek-executive" class="text-sm leading-7 text-white/90"></p>
+    </div>
+  </dialog>
+
+  <style>
+    dialog[open] { animation: peek-in 0.22s ease-out; }
+    @keyframes peek-in {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to { opacity: 1; transform: none; }
+    }
+  </style>
+
+  <script>
+    function initHubPage() {
+      const main = document.querySelector<HTMLElement>('#hub-main');
+      if (main?.dataset.lastHref) {
         try {
-          const previous = localStorage.getItem(passportKey);
-          if (previous) {
-            const previousRoute = JSON.parse(previous) as { pathname?: unknown };
-            if (typeof previousRoute.pathname === 'string' && previousRoute.pathname !== location.pathname) {
-              localStorage.setItem(previousPassportKey, previous);
-            }
-          }
-
-          localStorage.setItem(passportKey, JSON.stringify({
-            ...JSON.parse(currentPassport),
-            pathname: location.pathname,
-            savedAt: new Date().toISOString(),
-          }));
-
-          const savedPrevious = localStorage.getItem(previousPassportKey);
-          if (savedPrevious && resumeLink) {
-            const previousRoute = JSON.parse(savedPrevious) as { pathname?: unknown };
-            if (typeof previousRoute.pathname === 'string' && previousRoute.pathname.startsWith('/')) {
-              resumeLink.href = previousRoute.pathname;
-            }
-          }
-        } catch (error) {
-          console.error('Unable to synchronize the academy route passport.', error);
-          if (status) status.textContent = 'تعذر حفظ موضع المسار على هذا الجهاز.';
-        }
+          localStorage.setItem(
+            'memaar:last',
+            JSON.stringify({ href: main.dataset.lastHref, title: main.dataset.lastTitle ?? '' }),
+          );
+        } catch {}
       }
 
-      document.addEventListener('astro:page-load', syncPassport);
-      syncPassport();
-    </script>
-  </body>
-</html>
+      const dialog = document.querySelector<HTMLDialogElement>('#quick-peek');
+      if (!dialog) return;
+      const el = (id: string) => dialog.querySelector<HTMLElement>(id)!;
+
+      document.querySelectorAll<HTMLElement>('[data-peek]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          el('#quick-peek-title').textContent = btn.dataset.title ?? '';
+          el('#quick-peek-summary').textContent = btn.dataset.summary ?? '';
+          el('#quick-peek-executive').textContent = btn.dataset.executive ?? '';
+          dialog.showModal();
+        });
+      });
+      dialog.querySelector('[data-peek-close]')?.addEventListener('click', () => dialog.close());
+      dialog.addEventListener('click', (e) => {
+        if (e.target === dialog) dialog.close();
+      });
+    }
+    document.addEventListener('astro:page-load', initHubPage);
+  </script>
+</AcademyLayout>

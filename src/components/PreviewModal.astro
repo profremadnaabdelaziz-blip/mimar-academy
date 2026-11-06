@@ -1,0 +1,103 @@
+---
+// src/components/PreviewModal.astro
+---
+
+<dialog id="quick-peek-modal" class="m-auto w-[calc(100%-2rem)] max-w-2xl rounded-3xl border border-[#d4af37]/40 bg-[#12141a]/95 backdrop-blur-xl p-6 sm:p-8 shadow-[0_0_50px_rgba(212,175,55,0.15)] text-white open:animate-in open:fade-in open:zoom-in-95">
+  
+  <!-- زر الإغلاق -->
+  <button type="button" data-peek-close class="absolute top-4 left-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-colors">
+    ✕
+  </button>
+
+  <div class="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+    <span class="text-3xl">📄</span>
+    <div>
+      <p id="peek-type" class="text-[10px] font-bold text-[#d4af37] tracking-wider uppercase mb-1">مقال</p>
+      <h2 id="peek-title" class="font-amiri text-2xl font-bold text-white leading-tight">عنوان المحتوى هنا</h2>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    <!-- الملخص التنفيذي -->
+    <div class="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
+      <p class="text-xs font-bold text-[#d4af37] mb-2">✦ الملخص التنفيذي</p>
+      <p id="peek-summary" class="text-sm leading-7 text-white/80">هنا سيتم عرض ملخص سريع للمقال أو الكتاب...</p>
+    </div>
+
+    <!-- بيانات إضافية (للكتب) -->
+    <div id="peek-meta-container" class="hidden flex-wrap gap-4 text-xs text-white/60">
+      <span class="flex items-center gap-1">👤 <span id="peek-author">المؤلف</span></span>
+      <span class="flex items-center gap-1">⏱️ <span id="peek-time">10 دقائق</span></span>
+      <span class="flex items-center gap-1">📄 <span id="peek-pages">120 صفحة</span></span>
+    </div>
+  </div>
+
+  <!-- أزرار الإجراءات -->
+  <div class="mt-8 flex flex-wrap gap-3">
+    <a id="peek-full-link" href="#" class="flex-1 min-w-[150px] py-3 rounded-xl bg-[#d4af37] text-black font-bold text-sm text-center hover:scale-[1.02] transition-transform shadow-lg shadow-[#d4af37]/20">
+      قراءة المحتوى كاملاً
+    </a>
+    <a id="peek-download-link" href="#" class="hidden flex-1 min-w-[150px] py-3 rounded-xl border border-[#d4af37]/50 text-[#d4af37] font-bold text-sm text-center hover:bg-[#d4af37]/10 transition-colors">
+      ⬇️ تحميل الملف
+    </a>
+  </div>
+
+</dialog>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('quick-peek-modal') as HTMLDialogElement;
+    if (!modal) return;
+
+    const closeBtn = modal.querySelector('[data-peek-close]');
+    
+    // إغلاق عند النقر على الزر
+    closeBtn?.addEventListener('click', () => modal.close());
+
+    // إغلاق عند النقر خارج النافذة (على الخلفية)
+    modal.addEventListener('click', (e) => {
+      const dialogDimensions = modal.getBoundingClientRect();
+      if (
+        e.clientX < dialogDimensions.left ||
+        e.clientX > dialogDimensions.right ||
+        e.clientY < dialogDimensions.top ||
+        e.clientY > dialogDimensions.bottom
+      ) {
+        modal.close();
+      }
+    });
+
+    // دالة فتح النافذة وتعبئة البيانات (يمكن استدعاؤها من أي مكان)
+    (window as any).openQuickPeek = (data: any) => {
+      (document.getElementById('peek-type') as HTMLElement).textContent = data.type || 'محتوى';
+      (document.getElementById('peek-title') as HTMLElement).textContent = data.title || 'بدون عنوان';
+      (document.getElementById('peek-summary') as HTMLElement).textContent = data.summary || 'لا يوجد ملخص متاح.';
+      (document.getElementById('peek-full-link') as HTMLAnchorElement).href = data.url || '#';
+      
+      // إذا كان كتاباً، أظهر البيانات الإضافية وزر التحميل
+      const metaContainer = document.getElementById('peek-meta-container');
+      const downloadBtn = document.getElementById('peek-download-link') as HTMLAnchorElement;
+      
+      if (data.type === 'كتاب' || data.type === 'book') {
+        metaContainer?.classList.remove('hidden');
+        metaContainer?.classList.add('flex');
+        (document.getElementById('peek-author') as HTMLElement).textContent = data.author || 'غير محدد';
+        (document.getElementById('peek-time') as HTMLElement).textContent = data.time || 'غير محدد';
+        (document.getElementById('peek-pages') as HTMLElement).textContent = data.pages || 'غير محدد';
+        
+        if (data.downloadUrl) {
+          downloadBtn.classList.remove('hidden');
+          downloadBtn.href = data.downloadUrl;
+        } else {
+          downloadBtn.classList.add('hidden');
+        }
+      } else {
+        metaContainer?.classList.add('hidden');
+        metaContainer?.classList.remove('flex');
+        downloadBtn.classList.add('hidden');
+      }
+
+      modal.showModal();
+    };
+  });
+</script>

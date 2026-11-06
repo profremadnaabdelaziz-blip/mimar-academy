@@ -1,0 +1,219 @@
+---
+/**
+ * src/components/BookCard.astro
+ * بطاقة الكتاب الموسوعية والذكية، للشبكات داخل البوابات والمحاور.
+ * (للعرض المفصّل لكتاب واحد استخدم RichMediaShowcase بنوع book.)
+ *
+ * ما تقدمه:
+ *  - غلاف ثلاثي الأبعاد يميل مع حركة الماوس، تحيط به هالة ذهبية تشتد بالاقتراب
+ *  - ثلاث كبسولات: ماذا سأستفيد؟ • زمن القراءة • مستوى الدسم العلمي
+ *  - النقر على البطاقة يفتح QuickPeekModal بأشهر 3 اقتباسات مع نسخ ومشاركة
+ *
+ * ضع <QuickPeekModal /> مرة واحدة في الصفحة.
+ */
+
+type Density = 'beginner' | 'intermediate' | 'deep';
+
+export interface Props {
+  title: string;
+  author: string;
+  pages: number | string;
+  readTime: string;
+  category: string;
+  summary: string;
+  /** ماذا سأستفيد؟ */
+  benefit: string;
+  /** أشهر الاقتباسات (يُعرض أول 3 في النافذة، والأول في البطاقة) */
+  goldenQuotes: string[];
+  density?: Density;
+  coverImage?: string;
+  downloadUrl?: string;
+}
+
+const {
+  title,
+  author,
+  pages,
+  readTime,
+  category,
+  summary,
+  benefit,
+  goldenQuotes,
+  density = 'intermediate',
+  coverImage,
+  downloadUrl,
+} = Astro.props;
+
+const DENSITY = {
+  beginner: { label: 'مبتدئ', level: 1 },
+  intermediate: { label: 'متوسط', level: 2 },
+  deep: { label: 'عميق', level: 3 },
+} as const;
+
+const quotes = goldenQuotes.slice(0, 3);
+const firstQuote = quotes[0];
+const focusRing =
+  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d4af37]';
+---
+
+<article
+  data-book-card
+  class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.01] p-6 backdrop-blur-md transition-all duration-300 hover:border-[#d4af37]/60 hover:shadow-[0_10px_30px_rgba(212,175,55,0.15)] motion-safe:hover:-translate-y-1"
+>
+  <div>
+    <div class="mb-4">
+      <span class="inline-block rounded-full border border-[#d4af37]/30 bg-[#d4af37]/10 px-3 py-1 text-[11px] font-bold text-[#d4af37]">
+        ▥ {category}
+      </span>
+    </div>
+
+    <div class="mb-5 flex flex-col items-center gap-5 sm:flex-row">
+      <!-- الغلاف ثلاثي الأبعاد + الهالة -->
+      <div data-book-stage class="relative h-40 w-28 shrink-0 [perspective:800px]">
+        <div
+          aria-hidden="true"
+          class="absolute -inset-2 rounded-xl bg-gradient-to-tr from-[#d4af37]/40 to-[#d4af37]/10 blur-xl transition-opacity duration-300"
+          style="opacity: var(--glow, 0.2)"
+        ></div>
+        <div class="relative h-full w-full transition-transform duration-200 ease-out [transform-style:preserve-3d] motion-safe:[transform:rotateX(var(--rx,0deg))_rotateY(var(--ry,0deg))]">
+          {coverImage ? (
+            <img
+              src={coverImage}
+              alt={`غلاف كتاب ${title}`}
+              loading="lazy"
+              decoding="async"
+              class="h-full w-full rounded-lg border border-white/10 object-cover shadow-2xl shadow-black/60"
+            />
+          ) : (
+            <div
+              role="img"
+              aria-label={`غلاف كتاب ${title}`}
+              class="flex h-full w-full flex-col items-center justify-center rounded-lg border border-[#d4af37]/40 bg-gradient-to-br from-[#d4af37]/20 to-[#12141a] p-2 text-center shadow-xl shadow-black/60"
+            >
+              <span class="mb-1 text-2xl text-[#d4af37]" aria-hidden="true">▥</span>
+              <span class="line-clamp-3 font-amiri text-xs font-bold text-white/90">{title}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div class="text-center sm:text-start">
+        <h3 class="mb-1 font-amiri text-xl font-bold text-white transition-colors group-hover:text-[#d4af37]">
+          {title}
+        </h3>
+        <p class="mb-3 text-xs font-bold text-[#d4af37]/90">
+          المؤلف: <span class="font-normal text-white/75">{author}</span>
+        </p>
+        <p class="line-clamp-3 text-xs leading-6 text-white/70">{summary}</p>
+      </div>
+    </div>
+
+    <!-- كبسولات العصارة السريعة -->
+    <dl class="mb-5 grid grid-cols-2 gap-2">
+      <div class="col-span-2 rounded-2xl border border-[#d4af37]/20 bg-[#d4af37]/[0.06] p-3">
+        <dt class="mb-1 text-[11px] font-bold text-[#d4af37]">ماذا سأستفيد؟</dt>
+        <dd class="text-xs leading-6 text-white/85">{benefit}</dd>
+      </div>
+      <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+        <dt class="mb-1 text-[11px] text-white/70">الزمن التقديري للقراءة</dt>
+        <dd class="text-xs font-bold text-white">{readTime} • {pages} صفحة</dd>
+      </div>
+      <div class="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+        <dt class="mb-1 text-[11px] text-white/70">مستوى الدسم العلمي</dt>
+        <dd class="flex items-center gap-2">
+          <span role="img" aria-label={`مستوى الدسم العلمي: ${DENSITY[density].label}`} class="flex gap-1">
+            {[1, 2, 3].map((n) => (
+              <span class:list={['h-2 w-4 rounded-full', n <= DENSITY[density].level ? 'bg-[#d4af37]' : 'bg-white/15']}></span>
+            ))}
+          </span>
+          <span class="text-xs font-bold text-[#d4af37]" aria-hidden="true">{DENSITY[density].label}</span>
+        </dd>
+      </div>
+    </dl>
+
+    {firstQuote && (
+      <blockquote class="mb-5 border-r-2 border-[#d4af37]/60 pr-3">
+        <p class="mb-1 text-[11px] font-bold text-[#d4af37]">عصارة الاقتباس</p>
+        <p class="text-xs leading-6 text-white/85">«{firstQuote}»</p>
+      </blockquote>
+    )}
+  </div>
+
+  <div class="flex items-center gap-3 pt-2">
+    <!-- الزر يغطي البطاقة كلها (after:absolute) فالنقر على الكتاب يفتح المعاينة -->
+    <button
+      type="button"
+      data-peek-open
+      aria-haspopup="dialog"
+      data-preview-title={title}
+      data-preview-meta={`المؤلف: ${author} • ${pages} صفحة • ${readTime}`}
+      data-preview-summary={summary}
+      data-preview-quotes={JSON.stringify(quotes)}
+      class={`flex-1 rounded-xl border border-[#d4af37]/40 bg-[#d4af37]/10 px-3 py-2.5 text-xs font-bold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#0d0d0d] after:absolute after:inset-0 after:content-[''] ${focusRing}`}
+    >
+      معاينة سريعة
+      <span class="sr-only"> — {title}</span>
+    </button>
+
+    {downloadUrl && (
+      <a
+        href={downloadUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        class={`relative z-10 rounded-xl border border-white/15 bg-white/5 px-3 py-2.5 text-xs font-bold text-white transition hover:border-[#d4af37] hover:text-[#d4af37] ${focusRing}`}
+      >
+        تحميل
+        <span class="sr-only"> {title} (يفتح في نافذة جديدة)</span>
+      </a>
+    )}
+  </div>
+</article>
+
+<script>
+  // ميلان الغلاف وشدّة الهالة مع حركة الماوس. تفويض على document فيعمل مع ViewTransitions.
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  let active: HTMLElement | null = null;
+  let frame = 0;
+
+  const reset = (card: HTMLElement | null) => {
+    if (!card) return;
+    for (const v of ['--rx', '--ry', '--glow']) card.style.removeProperty(v);
+  };
+
+  function update(card: HTMLElement, x: number, y: number) {
+    const stage = card.querySelector<HTMLElement>('[data-book-stage]');
+    if (!stage) return;
+
+    const s = stage.getBoundingClientRect();
+    const c = card.getBoundingClientRect();
+    const cx = s.left + s.width / 2;
+    const cy = s.top + s.height / 2;
+
+    const clamp = (n: number) => Math.max(-1, Math.min(1, n));
+    const dx = clamp((x - cx) / (s.width / 2));
+    const dy = clamp((y - cy) / (s.height / 2));
+    const reach = Math.hypot(c.width, c.height) / 2;
+    const near = 1 - Math.min(Math.hypot(x - cx, y - cy) / reach, 1);
+
+    card.style.setProperty('--ry', `${(dx * 14).toFixed(1)}deg`);
+    card.style.setProperty('--rx', `${(-dy * 10).toFixed(1)}deg`);
+    card.style.setProperty('--glow', (0.2 + 0.65 * near).toFixed(2));
+  }
+
+  document.addEventListener('pointermove', (event) => {
+    if (event.pointerType !== 'mouse' || reduceMotion.matches) return;
+
+    const card = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-book-card]') ?? null;
+    if (active && active !== card) reset(active);
+    active = card;
+    if (!card) return;
+
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(() => update(card, event.clientX, event.clientY));
+  });
+
+  document.documentElement.addEventListener('mouseleave', () => {
+    reset(active);
+    active = null;
+  });
+</script>

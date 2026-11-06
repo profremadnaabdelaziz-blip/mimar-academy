@@ -1,0 +1,109 @@
+---
+// src/layouts/AcademyLayout.astro
+import '../styles/global.css'; 
+import { ClientRouter } from 'astro:transitions'; // تفعيل الانتقالات الناعمة (Astro 5)
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="أكاديمية مِعْمَار - مسارات النماء المعرفي" />
+    <title>{title}</title>
+
+    <!-- الانتقالات الناعمة بين الصفحات -->
+    <ClientRouter />
+
+    <!-- استدعاء خطوط جوجل -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style is:global>
+      @import "tailwindcss";
+    </style>
+  </head>
+
+  <body class="bg-[#0b0c10] text-white antialiased min-h-screen flex flex-col font-['Cairo']">
+    
+    <!-- ترويسة الموقع -->
+    <nav class="border-b border-white/10 bg-[#12141a]/50 backdrop-blur-md sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        
+        <a href="/" class="text-[#d4af37] font-bold text-xl font-amiri flex items-center gap-2">
+          <span>🏛️</span> أكاديمية مِعْمَار
+        </a>
+
+        <!-- زر استئناف المسار (جواز السفر الرقمي) -->
+        <div class="flex items-center gap-4">
+          <a id="resume-journey-btn" href="#" class="hidden items-center gap-2 px-4 py-2 rounded-full border border-[#d4af37]/50 text-[#d4af37] text-xs font-bold hover:bg-[#d4af37] hover:text-black transition-all shadow-[0_0_10px_rgba(212,175,55,0.2)]">
+            <span>⏳</span>
+            <span>استئناف المسار</span>
+          </a>
+        </div>
+
+      </div>
+    </nav>
+
+    <!-- محتوى الصفحة -->
+    <div class="flex-grow">
+      <slot />
+    </div>
+
+    <!-- تذييل الموقع -->
+    <footer class="border-t border-white/10 bg-[#12141a] py-6 mt-12 text-center text-xs text-white/50">
+      <p>© {new Date().getFullYear()} أكاديمية مِعْمَار. جميع الحقوق محفوظة.</p>
+    </footer>
+
+    <!-- سكريبت جواز السفر الرقمي -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const resumeBtn = document.getElementById('resume-journey-btn');
+        
+        // 1. حفظ المسار الحالي عند الانتقال (يُستثنى الصفحة الرئيسية)
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/' && currentPath !== '') {
+          localStorage.setItem('memaar_last_visited', currentPath);
+        }
+
+        // 2. عرض الزر إذا كان هناك مسار محفوظ (ونحن في الصفحة الرئيسية)
+        if (currentPath === '/' || currentPath === '') {
+          const lastVisited = localStorage.getItem('memaar_last_visited');
+          if (lastVisited && resumeBtn) {
+            resumeBtn.href = lastVisited;
+            resumeBtn.classList.remove('hidden');
+            resumeBtn.classList.add('flex');
+          }
+        }
+      });
+
+      // إعادة تهيئة الزر عند التنقل بين الصفحات (بسبب View Transitions)
+      document.addEventListener('astro:page-load', () => {
+        const resumeBtn = document.getElementById('resume-journey-btn');
+        if (!resumeBtn) return;
+        
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/' && currentPath !== '') {
+          localStorage.setItem('memaar_last_visited', currentPath);
+        }
+
+        if (currentPath === '/' || currentPath === '') {
+          const lastVisited = localStorage.getItem('memaar_last_visited');
+          if (lastVisited) {
+            resumeBtn.href = lastVisited;
+            resumeBtn.classList.remove('hidden');
+            resumeBtn.classList.add('flex');
+          }
+        }
+      });
+    </script>
+
+  </body>
+</html>

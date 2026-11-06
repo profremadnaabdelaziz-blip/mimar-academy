@@ -1,0 +1,57 @@
+---
+// src/components/Breadcrumbs.astro — مسار تنقل مرن: على الهاتف يختصر المنتصف إلى «…» ويتمدد بنقرة.
+export interface Crumb {
+  label: string;
+  href?: string;
+}
+interface Props {
+  items: Crumb[];
+}
+const { items } = Astro.props;
+const last = items.length - 1;
+---
+
+<nav data-crumbs aria-label="مسار الطالب">
+  <ol class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/55">
+    {items.map((c, i) => (
+      <>
+        {i === 1 && last > 1 && (
+          <li class="crumb-more flex items-center gap-2">
+            <span aria-hidden="true">/</span>
+            <button type="button" data-crumb-more aria-label="إظهار المسار كاملاً" class="rounded px-1.5 text-white/70 hover:text-[#d4af37]">…</button>
+          </li>
+        )}
+        <li class:list={['flex items-center gap-2', i > 0 && i < last && 'crumb-mid']} aria-current={i === last ? 'page' : undefined}>
+          {i > 0 && <span aria-hidden="true">/</span>}
+          {c.href && i !== last ? (
+            <a href={c.href} class="transition hover:text-[#d4af37]">{c.label}</a>
+          ) : (
+            <span class={i === last ? 'text-white/85' : 'text-[#d4af37]'}>{c.label}</span>
+          )}
+        </li>
+      </>
+    ))}
+  </ol>
+</nav>
+
+<style>
+  @media (max-width: 639px) {
+    [data-crumbs]:not([data-open]) .crumb-mid { display: none; }
+    [data-crumbs][data-open] .crumb-more { display: none; }
+    [data-crumbs][data-open] .crumb-mid { animation: crumb-in 0.2s ease-out; }
+  }
+  @media (min-width: 640px) {
+    .crumb-more { display: none; }
+  }
+  @keyframes crumb-in {
+    from { opacity: 0; transform: translateX(6px); }
+    to { opacity: 1; transform: none; }
+  }
+</style>
+
+<script>
+  document.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('[data-crumb-more]');
+    btn?.closest('[data-crumbs]')?.setAttribute('data-open', '');
+  });
+</script>

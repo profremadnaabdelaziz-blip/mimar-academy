@@ -1,64 +1,96 @@
 ---
-// src/components/BottomNav.astro
-// إضافة وتحديث شريط التصفح السفلي الذكي للهواتف والتابلت لعام 2026
+// src/components/BottomBar.astro — شريط التنقل السفلي الذكي والموسوعي للهواتف والتابلت
+import { memaarData } from '../data/memaarData';
+import { hubUrl, portalIcons, shortTitle } from '../data/memaarConfig';
+
+interface Props {
+  active?: string;
+}
+const { active } = Astro.props;
+
+const items = memaarData.map((p) => ({
+  slug: p.slug,
+  label: shortTitle(p.title),
+  icon: portalIcons[p.slug],
+  total: p.gates.length,
+  href: p.gates[0] ? hubUrl(p.slug, 'level1', p.gates[0].id, 'article') : '/',
+  isActive: p.slug === active,
+}));
 ---
 
-<div class="fixed bottom-0 inset-x-0 bg-[#0d0d0d]/95 backdrop-blur-md border-t border-[#58111a]/40 md:hidden z-40 transition-all duration-300" id="mobile-bottom-nav">
-  <div class="flex justify-around items-center h-16 max-w-md mx-auto px-2">
-    
-    <!-- زر معمار الرسالة -->
-    <a href="#pillar-1" class="flex flex-col items-center justify-center text-gray-400 hover:text-[#d4af37] active-state transition-colors gap-1 group">
-      <span class="text-lg">✨</span>
-      <span class="text-[10px] font-['Cairo'] font-medium">الرسالة</span>
-    </a>
+<nav
+  aria-label="البوابات الذكية"
+  class="fixed inset-x-0 bottom-0 z-40 border-t border-[#d4af37]/30 bg-[#0d0d0d]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden transition-all duration-300"
+  id="mobile-bottom-nav"
+>
+  <div class="mx-auto flex max-w-lg items-center justify-around px-2 py-1.5">
+    {items.map((it) => (
+      <a
+        href={it.href}
+        data-portal-link={it.slug}
+        data-total={it.total}
+        aria-current={it.isActive ? 'page' : undefined}
+        class={`relative flex flex-col items-center gap-0.5 px-2 py-1 text-[11px] transition-colors ${
+          it.isActive ? 'font-bold text-[#d4af37]' : 'text-white/60 hover:text-[#d4af37]'
+        }`}
+      >
+        <span aria-hidden="true" class="text-lg leading-none">{it.icon}</span>
+        <span class="max-w-full truncate font-['Cairo']">{it.label}</span>
+        <span
+          data-badge
+          hidden
+          class="absolute left-1/2 top-0 ml-3 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#d4af37] px-1 text-[9px] font-bold text-black shadow-md"
+        ></span>
+      </a>
+    ))}
 
-    <!-- زر معمار الذات -->
-    <a href="#pillar-2" class="flex flex-col items-center justify-center text-gray-400 hover:text-[#d4af37] transition-colors gap-1 group">
-      <span class="text-lg">🧠</span>
-      <span class="text-[10px] font-['Cairo'] font-medium">الذات</span>
-    </a>
-
-    <!-- زر معمار الإتقان -->
-    <a href="#pillar-3" class="flex flex-col items-center justify-center text-gray-400 hover:text-[#d4af37] transition-colors gap-1 group">
-      <span class="text-lg">📚</span>
-      <span class="text-[10px] font-['Cairo'] font-medium">الإتقان</span>
-    </a>
-
-    <!-- زر معمار القوة -->
-    <a href="#pillar-4" class="flex flex-col items-center justify-center text-gray-400 hover:text-[#d4af37] transition-colors gap-1 group">
-      <span class="text-lg">💪</span>
-      <span class="text-[10px] font-['Cairo'] font-medium">القوة</span>
-    </a>
-
-    <!-- زر المنارة الجزائرية المعمار الخامس المعتمد -->
-    <a href="#pillar-5" class="flex flex-col items-center justify-center text-[#d4af37] font-bold border-t-2 border-[#d4af37] pt-1 transition-colors gap-1 group" id="nav-manara-btn">
-      <span class="text-lg">🇩🇿</span>
-      <span class="text-[10px] font-['Cairo']">المنارة</span>
-    </a>
-
-    <!-- زر القفز السريع بالبحث المدمج لوحة الأوامر -->
-    <button data-open-palette class="flex flex-col items-center justify-center text-gray-400 hover:text-[#d4af37] transition-colors gap-1 group">
-      <span class="text-lg">🔍</span>
-      <span class="text-[10px] font-['Cairo'] font-medium">قَفْز</span>
+    <!-- زر لوحة الأوامر السريعة (قَفْز / بحث) المدمج من الحزمة الجديدة -->
+    <button
+      type="button"
+      data-open-palette
+      class="flex flex-col items-center justify-center gap-0.5 px-2 py-1 text-[11px] text-white/60 hover:text-[#d4af37] transition-colors group"
+      aria-label="بحث سريع"
+    >
+      <span class="text-lg leading-none" aria-hidden="true">🔍</span>
+      <span class="font-['Cairo']">قَفْز</span>
     </button>
-
   </div>
-</div>
+</nav>
 
 <script>
-  // تفعيل خاصية "الاختفاء الذكي" للشريط السفلي أثناء تفعيل وضع القراءة المركزة (Zenith Mode)
-  document.addEventListener('DOMContentLoaded', () => {
-    const bottomNav = document.getElementById('mobile-bottom-nav');
+  import { getPassport, visitedCount } from '../lib/passport';
+
+  function initBottomBar() {
+    const passport = getPassport();
     
-    // مراقبة تفعيل وضع القراءة والتركيز من المكونات الأخرى
-    const observer = new MutationObserver(() => {
-      if (document.body.classList.contains('focus-activated')) {
-        if (bottomNav) bottomNav.style.transform = 'translateY(100%)';
-      } else {
-        if (bottomNav) bottomNav.style.transform = 'translateY(0)';
+    // 1) تحديث الروابط والشارات بناءً على جواز السفر
+    document.querySelectorAll<HTMLAnchorElement>('[data-portal-link]').forEach((a) => {
+      const slug = a.dataset.portalLink!;
+      const last = passport.byPortal[slug];
+      if (last?.href) a.href = last.href;
+      
+      const left = Number(a.dataset.total) - visitedCount(passport, slug);
+      const badge = a.querySelector<HTMLElement>('[data-badge]');
+      if (badge && left > 0) {
+        badge.textContent = String(left);
+        badge.hidden = false;
+        badge.setAttribute('aria-label', `${left} محاور لم تُزر`);
       }
     });
 
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-  });
+    // 2) تفعيل خاصية الاختفاء الذكي أثناء وضع القراءة المركزة (Zenith Mode)
+    const bottomNav = document.getElementById('mobile-bottom-nav');
+    if (bottomNav) {
+      const observer = new MutationObserver(() => {
+        if (document.body.classList.contains('focus-activated')) {
+          bottomNav.style.transform = 'translateY(100%)';
+        } else {
+          bottomNav.style.transform = 'translateY(0)';
+        }
+      });
+      observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }
+  }
+
+  document.addEventListener('astro:page-load', initBottomBar);
 </script>

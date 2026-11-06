@@ -1,0 +1,187 @@
+---
+// src/pages/pillar/[id]/[levelId]/[contentType].astro
+import AcademyLayout from '../../../../layouts/AcademyLayout.astro';
+import Sidebar from '../../../../components/Sidebar.astro';
+import PreviewModal from '../../../../components/PreviewModal.astro';
+import { pillarsData, contentData } from '../../../../data/academyData';
+
+export function getStaticPaths() {
+  const paths = [];
+  for (const pillar of pillarsData) {
+    for (const level of ['level1', 'level2']) {
+      for (const type of ['articles', 'books', 'videos']) {
+        paths.push({
+          params: { id: String(pillar.id), levelId: level, contentType: type }
+        });
+      }
+    }
+  }
+  return paths;
+}
+
+const { id, levelId, contentType } = Astro.params;
+const items = contentData[`${id}-${contentType}`] || [];
+const pillar = pillarsData.find(p => String(p.id) === id);
+---
+
+<AcademyLayout title={`${contentType} — ${pillar?.titleMain}`}>
+  <!-- الترويسة الخاصة بصفحة القراءة -->
+  <div id="reading-header" class="w-full bg-[#12141a]/95 backdrop-blur-md border-b border-[#d4af37]/20 py-3 px-4 flex items-center justify-between transition-all duration-500 sticky top-0 z-40">
+    <div class="flex items-center gap-3">
+      <a href={`/pillar/${id}`} class="text-[#d4af37] hover:text-white text-sm flex items-center gap-1 transition-colors">
+        <span>➔</span> عودة
+      </a>
+      <span class="text-white/30">|</span>
+      <span class="text-white/60 text-sm">{pillar?.titleMain} - {levelId === 'level1' ? 'رواسخ البناء' : 'قمم المعالي'}</span>
+    </div>
+    <!-- زر وضع التركيز (Zen Mode) -->
+    <button id="zen-toggle" class="flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#d4af37]/40 text-[#d4af37] text-xs font-bold hover:bg-[#d4af37]/10 transition-colors shadow-[0_0_10px_rgba(212,175,55,0.1)]">
+      <span>🧘</span> وضع التركيز
+    </button>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 flex gap-6">
+    <!-- الشريط الجانبي -->
+    <div id="sidebar-container" class="transition-all duration-500 hidden lg:block">
+      <Sidebar activePillarId={id} />
+    </div>
+
+    <!-- محتوى الصفحة -->
+    <main id="reading-content" class="flex-1 py-10 transition-all duration-500">
+      
+      <div class="text-center mb-12">
+        <span class="inline-block px-3 py-1 rounded-full bg-[#d4af37]/10 border border-[#d4af37]/30 text-[#d4af37] text-xs font-bold mb-4">
+          {pillar?.short}
+        </span>
+        <h1 class="text-4xl font-amiri font-bold text-white mb-3">
+          {contentType === 'articles' ? 'المقالات والأبحاث' : contentType === 'books' ? 'الكتب والأطروحات' : 'المرئيات والدروس'}
+        </h1>
+        <div class="w-24 h-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent mx-auto"></div>
+      </div>
+
+      <!-- شبكة Bento الفاخرة (تدعم السحب الأفقي على الهاتف) -->
+      <div class="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-6 lg:grid lg:grid-cols-2 lg:overflow-visible lg:pb-0 hide-scrollbar">
+        {items.map((item, index) => (
+          <div 
+            class="bento-card group relative bg-[#12141a] border border-[#d4af37]/20 rounded-3xl p-6 lg:p-8 min-w-[85vw] sm:min-w-[400px] lg:min-w-0 snap-center hover:border-[#d4af37]/60 transition-all duration-300 flex flex-col justify-between"
+            style="transform-style: preserve-3d; perspective: 1000px;"
+          >
+            <!-- تأثير الإضاءة الداخلية -->
+            <div class="absolute inset-0 bg-gradient-to-br from-[#d4af37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+
+            <div class="relative z-10">
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-xs font-bold text-[#d4af37] bg-[#d4af37]/10 px-3 py-1 rounded-full">
+                  {item.type}
+                </span>
+                <span class="text-[11px] text-white/50">{item.readTime || item.time || ''}</span>
+              </div>
+              
+              <h3 class="text-2xl font-bold text-white mb-3 group-hover:text-[#d4af37] transition-colors leading-relaxed">
+                {item.title}
+              </h3>
+              <p class="text-sm text-white/60 leading-7 mb-6 line-clamp-3">
+                {item.summary}
+              </p>
+            </div>
+
+            <div class="relative z-10">
+              <div class="flex items-center justify-between text-xs text-[#d4af37] mb-4 border-t border-white/5 pt-4">
+                <span>✍️ {item.author || 'أ. رماضنة عبد العزيز'}</span>
+                {item.pages && <span>📄 {item.pages}</span>}
+              </div>
+              
+              <button 
+                onclick={`window.openQuickPeek(${JSON.stringify(item)})`}
+                class="w-full py-3 rounded-xl bg-[#d4af37] text-black text-sm font-bold hover:scale-[1.02] active:scale-95 transition-transform flex items-center justify-center gap-2 shadow-lg shadow-[#d4af37]/20"
+              >
+                <span>⚡</span> معاينة سريعة
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {items.length === 0 && (
+        <div class="text-center py-20 bg-[#12141a] border border-dashed border-[#d4af37]/20 rounded-3xl">
+          <span class="text-4xl block mb-4">🏜️</span>
+          <p class="text-white/40 text-lg">لا توجد محتويات مضافة في هذا القسم حتى الآن.</p>
+        </div>
+      )}
+
+    </main>
+  </div>
+</AcademyLayout>
+
+<PreviewModal />
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // 1. تفعيل وضع التركيز (Zen Mode)
+    const zenBtn = document.getElementById('zen-toggle');
+    const sidebar = document.getElementById('sidebar-container');
+    const header = document.getElementById('reading-header');
+    const mainContent = document.getElementById('reading-content');
+    const body = document.body;
+
+    if (zenBtn && sidebar && header) {
+      zenBtn.addEventListener('click', () => {
+        body.classList.toggle('zen-mode-active');
+        
+        if (body.classList.contains('zen-mode-active')) {
+          sidebar.style.display = 'none';
+          header.style.transform = 'translateY(-100%)';
+          header.style.position = 'absolute';
+          mainContent.classList.add('max-w-5xl');
+          zenBtn.innerHTML = '<span>🚪</span> إنهاء التركيز';
+          zenBtn.classList.add('bg-[#d4af37]', 'text-black');
+        } else {
+          sidebar.style.display = 'block';
+          header.style.transform = 'translateY(0)';
+          header.style.position = 'relative';
+          mainContent.classList.remove('max-w-5xl');
+          zenBtn.innerHTML = '<span>🧘</span> وضع التركيز';
+          zenBtn.classList.remove('bg-[#d4af37]', 'text-black');
+        }
+      });
+    }
+
+    // 2. تفعيل تأثير الإمالة (3D Tilt) للبطاقات (لأجهزة الكمبيوتر فقط)
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      const cards = document.querySelectorAll('.bento-card');
+      cards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          
+          const rotateX = ((y - centerY) / centerY) * -5; // درجة الميلان العمودي
+          const rotateY = ((x - centerX) / centerX) * 5;  // درجة الميلان الأفقي
+          
+          card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+        });
+        
+        card.addEventListener('mouseleave', () => {
+          card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+        });
+      });
+    }
+  });
+</script>
+
+<style>
+  .zen-mode-active { background-color: #0a0a0a; }
+  .zen-mode-active #reading-content { max-width: 900px; margin: 0 auto; transition: all 0.5s ease; }
+  
+  /* إخفاء شريط التمرير للسماح بالسحب الناعم على الهاتف */
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  
+  .bento-card {
+    transition: transform 0.1s ease-out, border-color 0.3s ease, box-shadow 0.3s ease;
+    will-change: transform;
+  }
+</style>

@@ -1,0 +1,198 @@
+---
+// src/components/ContentExplorer.astro
+// متصفح المحتوى المفهرس: بحث فوري + تصفية بالنوع، يعمل بلا مكتبات ولا طلبات شبكة.
+export interface Item {
+  id: string;
+  title: string;
+  type: 'article' | 'book' | 'summary' | 'video';
+  readTime: string;
+  description: string;
+  slug: string; // مسار الصفحة، مثل 'articles/memory-basics' أو '/articles/memory-basics'
+}
+
+export interface Props {
+  hubTitle: string;
+  portalTitle: string;
+  items: Item[];
+}
+
+const { hubTitle, portalTitle, items } = Astro.props;
+
+const typeLabels = {
+  article: { single: 'مقال', plural: 'المقالات' },
+  book: { single: 'كتاب', plural: 'الكتب والمراجع' },
+  summary: { single: 'ملخص', plural: 'الملخصات' },
+  video: { single: 'مرئي', plural: 'المرئيات' },
+} as const;
+
+// لا تُعرض إلا الأنواع الموجودة فعلاً، ومعها عددها
+const filters = (Object.keys(typeLabels) as Array<keyof typeof typeLabels>)
+  .map((type) => ({ type, label: typeLabels[type].plural, count: items.filter((i) => i.type === type).length }))
+  .filter((f) => f.count > 0);
+
+const toHref = (slug: string) => (/^(\/|https?:)/.test(slug) ? slug : `/${slug}`);
+---
+
+<section data-explorer class="mx-auto w-full max-w-6xl px-4 py-6" aria-label={`محتوى ${hubTitle}`}>
+  <header class="mb-6 flex flex-col justify-between gap-4 rounded-2xl border border-[#d4af37]/20 bg-white/[0.03] p-6 md:flex-row md:items-center">
+    <div>
+      <p class="text-xs font-bold text-[#d4af37]">{portalTitle}</p>
+      <h2 class="mt-1 font-amiri text-2xl font-bold text-white sm:text-3xl">{hubTitle}</h2>
+    </div>
+
+    <div role="search" class="relative w-full md:w-80">
+      <label for="explorer-search" class="sr-only">ابحث في محتوى المحور</label>
+      <input
+        id="explorer-search"
+        data-search
+        type="search"
+        autocomplete="off"
+        enterkeyhint="search"
+        placeholder="ابحث في العناوين والأوصاف…"
+        class="w-full rounded-xl border border-white/15 bg-[#0d0d0d] px-4 py-2.5 pl-12 text-sm text-white placeholder-white/40 transition focus:border-[#d4af37] focus:outline-none"
+      />
+      <kbd class="pointer-events-none absolute left-3 top-1/2 hidden -translate-y-1/2 rounded border border-white/15 px-1.5 text-[10px] text-white/40 sm:block" aria-hidden="true">/</kbd>
+    </div>
+  </header>
+
+  <div class="mb-6 flex flex-wrap items-center gap-2" role="group" aria-label="تصفية حسب النوع">
+    <button
+      type="button"
+      data-filter="all"
+      aria-pressed="true"
+      class="rounded-full border border-white/15 px-4 py-1.5 text-xs text-white/70 transition hover:border-[#d4af37] aria-pressed:border-[#d4af37] aria-pressed:bg-[#d4af37] aria-pressed:font-bold aria-pressed:text-[#0d0d0d]"
+    >
+      الكل <span class="mr-1 opacity-70">({items.length})</span>
+    </button>
+    {filters.map((f) => (
+      <button
+        type="button"
+        data-filter={f.type}
+        aria-pressed="false"
+        class="rounded-full border border-white/15 px-4 py-1.5 text-xs text-white/70 transition hover:border-[#d4af37] aria-pressed:border-[#d4af37] aria-pressed:bg-[#d4af37] aria-pressed:font-bold aria-pressed:text-[#0d0d0d]"
+      >
+        {f.label} <span class="mr-1 opacity-70">({f.count})</span>
+      </button>
+    ))}
+  </div>
+
+  <p data-status role="status" aria-live="polite" class="mb-4 text-xs text-white/50"></p>
+
+  <ul data-grid class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    {items.map((item) => (
+      <li data-card data-type={item.type} data-title={item.title} data-desc={item.description}>
+        <article class="group flex h-full flex-col justify-between rounded-2xl border border-white/10 bg-white/[0.035] p-5 transition-colors hover:border-[#d4af37]/60">
+          <div>
+            <div class="mb-3 flex items-center justify-between">
+              <span class="rounded-full bg-[#d4af37]/20 px-2.5 py-0.5 text-[11px] font-bold text-[#d4af37]">{typeLabels[item.type].single}</span>
+              <span class="text-xs text-[#d4af37]">{item.readTime}</span>
+            </div>
+            <h3 class="mb-2 font-amiri text-lg font-bold text-white transition-colors group-hover:text-[#d4af37]">{item.title}</h3>
+            <p class="mb-5 text-xs leading-6 text-white/65">{item.description}</p>
+          </div>
+          <a
+            href={toHref(item.slug)}
+            class="inline-flex w-full items-center justify-center rounded-xl border border-[#d4af37]/30 bg-[#d4af37]/10 px-3 py-2 text-xs font-bold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#0d0d0d]"
+          >
+            تصفح المحتوى
+          </a>
+        </article>
+      </li>
+    ))}
+  </ul>
+
+  <div data-empty hidden class="rounded-2xl border border-dashed border-white/15 p-10 text-center">
+    <p class="mb-1 font-amiri text-xl font-bold">لا توجد نتائج مطابقة</p>
+    <p class="mb-5 text-sm text-white/60">جرّب كلمة أقصر أو غيّر نوع المحتوى.</p>
+    <button type="button" data-reset class="rounded-xl border border-[#d4af37]/40 px-4 py-2 text-xs font-bold text-[#d4af37] transition hover:bg-[#d4af37]/10">
+      مسح البحث والتصفية
+    </button>
+  </div>
+</section>
+
+<script>
+  import { normalizeArabic as normalize } from '../lib/arabic';
+
+  function initExplorer(root: HTMLElement, signal: AbortSignal) {
+    const input = root.querySelector<HTMLInputElement>('[data-search]')!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+    const cards = [...root.querySelectorAll<HTMLElement>('[data-card]')];
+    const status = root.querySelector<HTMLElement>('[data-status]')!;
+    const empty = root.querySelector<HTMLElement>('[data-empty]')!;
+    const grid = root.querySelector<HTMLElement>('[data-grid]')!;
+    const haystacks = cards.map((c) => normalize(`${c.dataset.title} ${c.dataset.desc}`));
+
+    // استعادة الحالة من الرابط (?q=…&type=…) ليصبح البحث قابلاً للمشاركة
+    const params = new URLSearchParams(location.search);
+    let type = params.get('type') ?? 'all';
+    if (!buttons.some((b) => b.dataset.filter === type)) type = 'all';
+    input.value = params.get('q') ?? '';
+
+    function apply() {
+      const terms = normalize(input.value).split(/\s+/).filter(Boolean);
+      let visible = 0;
+
+      cards.forEach((card, i) => {
+        const show =
+          (type === 'all' || card.dataset.type === type) && terms.every((t) => haystacks[i].includes(t));
+        card.hidden = !show;
+        if (show) visible++;
+      });
+
+      buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === type)));
+      grid.hidden = visible === 0;
+      empty.hidden = visible !== 0;
+      status.textContent = visible === cards.length ? '' : `${visible} من ${cards.length} نتيجة`;
+
+      const url = new URL(location.href);
+      input.value.trim() ? url.searchParams.set('q', input.value.trim()) : url.searchParams.delete('q');
+      type !== 'all' ? url.searchParams.set('type', type) : url.searchParams.delete('type');
+      // نحافظ على history.state حتى لا نكسر الرجوع في ClientRouter
+      history.replaceState(history.state, '', url);
+    }
+
+    let timer: number | undefined;
+    input.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = window.setTimeout(apply, 120);
+    }, { signal });
+
+    buttons.forEach((b) =>
+      b.addEventListener('click', () => {
+        type = b.dataset.filter ?? 'all';
+        apply();
+      }, { signal }),
+    );
+
+    root.querySelector('[data-reset]')?.addEventListener('click', () => {
+      input.value = '';
+      type = 'all';
+      apply();
+      input.focus();
+    }, { signal });
+
+    // اختصارات: «/» للتركيز على البحث، و Esc لمسحه
+    document.addEventListener('keydown', (e) => {
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement).tagName);
+      if (e.key === '/' && !typing) {
+        e.preventDefault();
+        input.focus();
+      }
+    }, { signal });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && input.value) {
+        input.value = '';
+        apply();
+      }
+    }, { signal });
+
+    apply();
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    const controller = new AbortController();
+    document.querySelectorAll<HTMLElement>('[data-explorer]').forEach((el) => initExplorer(el, controller.signal));
+    // تنظيف المستمعات قبل مغادرة الصفحة (ClientRouter)
+    document.addEventListener('astro:before-swap', () => controller.abort(), { once: true });
+  });
+</script>
