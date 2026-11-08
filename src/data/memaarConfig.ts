@@ -1,39 +1,58 @@
-import { memaarData } from './memaarData';
+/ src/data/memaarConfig.ts
+import { memaarData } from "./memaarData";
+import type { Gate, Pillar } from "./memaarData";
+import type { ContentType } from "./memaarContent";
 
-export const levelIds = ['level1', 'level2'] as const;
-export type LevelId = (typeof levelIds)[number];
+export type LevelId = number;
 
-export const levels: Record<LevelId, string> = {
-  level1: 'رَوَاسِخُ البِنَاءِ',
-  level2: 'قِمَمُ المعالي',
-};
-
-export const contentTypes = ['article', 'book', 'video', 'tree'] as const;
-export type ContentType = (typeof contentTypes)[number];
-
-export const contentLabels: Record<ContentType, { title: string; kind: string; icon: string }> = {
-  article: { title: 'المقالات والأبحاث', kind: 'مقال', icon: '📄' },
-  book: { title: 'الكتب والطروحات', kind: 'كتاب', icon: '📚' },
-  video: { title: 'المرئيات والدروس', kind: 'مرئي', icon: '🎬' },
-  tree: { title: 'الشجرة المعرفية', kind: 'شجرة', icon: '🌳' },
-};
-
-export const portalIcons: Record<string, string> = {
-  imani: '🕌',
-  nafs: '🧠',
-  tafawwuq: '📐',
-  thaqafa: '🌍',
-  manara: '🏛️',
-};
-
-export function getPortal(slug: string | undefined) {
+export function getPortal(slug: string | undefined): Pillar | undefined {
+  if (!slug) return undefined;
   return memaarData.find((portal) => portal.slug === slug);
 }
 
-export function getHub(portal: ReturnType<typeof getPortal>, hubId: string | undefined) {
-  return portal?.gates.find((gate) => String(gate.id) === hubId);
+export function getHub(
+  portal: ReturnType<typeof getPortal>,
+  hubId: string | number | undefined
+): Gate | undefined {
+  if (!portal || hubId === undefined || hubId === null) return undefined;
+
+  const id = Number(hubId);
+  if (!Number.isFinite(id)) return undefined;
+
+  return portal.gates.find((gate) => gate.id === id);
 }
 
-export function hubUrl(portalSlug: string, levelId: LevelId, hubId: number | string, type: ContentType) {
-  return `/${portalSlug}/level/${levelId}/hub/${hubId}/${type}`;
+export function hubUrl(
+  portalSlug: string,
+  levelId: LevelId,
+  hubId: number | string,
+  type: ContentType
+): string {
+  return `/academy/${encodeURIComponent(
+    portalSlug
+  )}/level-${encodeURIComponent(String(levelId))}/hub-${encodeURIComponent(
+    String(hubId)
+  )}/${encodeURIComponent(type)}`;
+}
+
+export function getPortalByGateId(
+  gateId: number | string
+): Pillar | undefined {
+  const id = Number(gateId);
+  if (!Number.isFinite(id)) return undefined;
+
+  return memaarData.find((portal) =>
+    portal.gates.some((gate) => gate.id === id)
+  );
+}
+
+export function getAllPortals(): Pillar[] {
+  return memaarData;
+}
+
+export function getPortalStats() {
+  return {
+    portals: memaarData.length,
+    gates: memaarData.reduce((sum, portal) => sum + portal.gates.length, 0),
+  };
 }
