@@ -5,6 +5,7 @@ import { memaarData } from '../../../data/memaarData';
 import { getPortal, getHub, hubUrl } from '../../../data/memaarConfig';
 import { contentLabels, contentTypes, levelIds, levels } from '../../../data/memaarLabels';
 import { getItemsByHubId, type ContentItem, type ContentType } from '../../../data/memaarContent';
+import ContentCard from '../../../components/ContentCard.astro';
 
 export function getStaticPaths() {
   return memaarData.flatMap((portal) =>
@@ -52,11 +53,9 @@ const cards = contentTypes.map((type) => {
 const featured = cards.find((c) => c.active)!;
 const others = cards.filter((c) => !c.active);
 
-const contentSections = contentTypes.map((type) => ({
-  type,
-  label: contentLabels[type].title,
-  items: itemsOf(type),
-}));
+const articles = itemsOf('article');
+const books = itemsOf('book');
+const videos = itemsOf('video');
 
 const hubIndex = gates.findIndex((g) => g === hub);
 const prevHub = gates[hubIndex - 1];
@@ -145,29 +144,59 @@ const nextHub = gates[hubIndex + 1];
           <p class="text-sm leading-7 text-white/55">لم يُضف محتوى لهذه الخانة بعد. سيظهر هنا فور إضافته.</p>
         )}
 
-        {contentSections.map((section) =>
-          section.items.length > 0 && (
-            <section aria-label={section.label} class="mb-10 last:mb-0">
-              <h3 class="mb-4 font-amiri text-xl font-bold text-[#d4af37]">{section.label}</h3>
-              <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {section.items.map((item) => (
-                  <li>
-                    <a
-                      href={item.url}
-                      class="flex h-full flex-col rounded-xl border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-[#d4af37]/50"
-                    >
-                      <h4 class="font-amiri text-lg font-bold text-white">{item.title}</h4>
-                      <p class="mt-2 flex-1 text-sm leading-7 text-white/65">{item.summary}</p>
-                      <span class="mt-4 text-[11px] text-white/50">{item.meta}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ),
-        )}
       </div>
     </article>
+
+    <div class="mb-8 flex flex-wrap gap-2" role="group" aria-label="تصفية المحتوى">
+      {[
+        { value: 'all', label: 'الكل' },
+        { value: 'article', label: 'مقالات' },
+        { value: 'book', label: 'كتب' },
+        { value: 'video', label: 'مرئيات' },
+      ].map((f) => (
+        <button
+          type="button"
+          data-filter={f.value}
+          aria-pressed={f.value === 'all' ? 'true' : 'false'}
+          class="rounded-full border border-white/15 px-4 py-2 text-xs text-white/70 transition-all hover:border-[#d4af37]/60 hover:text-[#d4af37] aria-pressed:border-[#d4af37] aria-pressed:bg-[#d4af37] aria-pressed:font-bold aria-pressed:text-black"
+        >
+          {f.label}
+        </button>
+      ))}
+    </div>
+
+    {articles.length > 0 && (
+      <section data-type-section="article" class="mb-10">
+        <h2 class="mb-4 flex items-center gap-2 text-xl font-bold text-amber-400">
+          <span class="h-2 w-2 rounded-full bg-emerald-400"></span> المقالات التحليلية
+        </h2>
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {articles.map((item) => <ContentCard {...item} />)}
+        </div>
+      </section>
+    )}
+
+    {books.length > 0 && (
+      <section data-type-section="book" class="mb-10">
+        <h2 class="mb-4 flex items-center gap-2 text-xl font-bold text-amber-400">
+          <span class="h-2 w-2 rounded-full bg-amber-400"></span> المراجع والكتب
+        </h2>
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {books.map((item) => <ContentCard {...item} />)}
+        </div>
+      </section>
+    )}
+
+    {videos.length > 0 && (
+      <section data-type-section="video" class="mb-10">
+        <h2 class="mb-4 flex items-center gap-2 text-xl font-bold text-amber-400">
+          <span class="h-2 w-2 rounded-full bg-sky-400"></span> الشروحات المرئية
+        </h2>
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {videos.map((item) => <ContentCard {...item} />)}
+        </div>
+      </section>
+    )}
 
     <section aria-label="خانات أخرى في هذا المحور" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
       {others.map((c) => (
@@ -247,6 +276,18 @@ const nextHub = gates[hubIndex + 1];
           );
         } catch {}
       }
+
+      const filterButtons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+      const typeSections = document.querySelectorAll<HTMLElement>('[data-type-section]');
+      filterButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const value = btn.dataset.filter;
+          filterButtons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+          typeSections.forEach((section) => {
+            section.hidden = value !== 'all' && section.dataset.typeSection !== value;
+          });
+        });
+      });
 
       const dialog = document.querySelector<HTMLDialogElement>('#quick-peek');
       if (!dialog) return;
