@@ -1,6 +1,7 @@
 ---
 // src/components/ContentCard.astro
 export interface Props {
+  id: string;
   type: 'article' | 'book' | 'video';
   title: string;
   summary: string;
@@ -8,7 +9,7 @@ export interface Props {
   meta: string;
 }
 
-const { type, title, summary, url, meta } = Astro.props;
+const { id, type, title, summary, url, meta } = Astro.props;
 
 const typeConfig = {
   article: {
@@ -34,8 +35,9 @@ const typeConfig = {
 const config = typeConfig[type] || typeConfig.article;
 ---
 
-<a 
-  href={url} 
+<div
+  data-card
+  data-search={`${title} ${summary}`.toLowerCase()}
   class={`group relative flex flex-col justify-between rounded-xl border border-slate-800/80 bg-slate-900/90 p-5 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${config.hoverBorder}`}
 >
   <div>
@@ -43,32 +45,48 @@ const config = typeConfig[type] || typeConfig.article;
       <span class={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border ${config.badgeBg}`}>
         {config.label}
       </span>
-      
-      <div class={`p-2 rounded-lg bg-slate-800/60 ${config.iconColor}`}>
-        {type === 'article' && (
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l5 5v11a2 2 0 01-2 2z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v4a1 1 0 001 1h4" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 10h10M7 14h8" />
+
+      <div class="flex items-center gap-2">
+        <div class={`p-2 rounded-lg bg-slate-800/60 ${config.iconColor}`}>
+          {type === 'article' && (
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l5 5v11a2 2 0 01-2 2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v4a1 1 0 001 1h4" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 10h10M7 14h8" />
+            </svg>
+          )}
+          {type === 'book' && (
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          )}
+          {type === 'video' && (
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
+        </div>
+
+        <button
+          type="button"
+          data-bookmark={id}
+          aria-pressed="false"
+          aria-label="حفظ للاحقاً"
+          class="relative z-10 p-2 rounded-lg bg-slate-800/60 text-slate-400 transition-colors hover:text-amber-400 aria-pressed:text-amber-400"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-4-7 4V5z" />
           </svg>
-        )}
-        {type === 'book' && (
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-        )}
-        {type === 'video' && (
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        )}
+        </button>
       </div>
     </div>
 
-    <h3 class="text-lg font-bold text-slate-100 group-hover:text-amber-400 transition-colors line-clamp-2 leading-snug">
-      {title}
-    </h3>
+    <a href={url} class="block after:absolute after:inset-0 after:rounded-xl after:content-['']">
+      <h3 class="text-lg font-bold text-slate-100 group-hover:text-amber-400 transition-colors line-clamp-2 leading-snug">
+        {title}
+      </h3>
+    </a>
     <p class="mt-2 text-sm text-slate-400 line-clamp-3 leading-relaxed">
       {summary}
     </p>
@@ -81,9 +99,9 @@ const config = typeConfig[type] || typeConfig.article;
       </svg>
       {meta}
     </span>
-    
+
     <span class="inline-flex items-center font-semibold text-amber-400 group-hover:translate-x-[-4px] transition-transform">
       تصفح المحتوى &larr;
     </span>
   </div>
-</a>
+</div>

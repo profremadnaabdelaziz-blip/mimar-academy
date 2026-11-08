@@ -147,7 +147,8 @@ const nextHub = gates[hubIndex + 1];
       </div>
     </article>
 
-    <div class="mb-8 flex flex-wrap gap-2" role="group" aria-label="تصفية المحتوى">
+    <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div class="flex flex-wrap gap-2" role="group" aria-label="تصفية المحتوى">
       {[
         { value: 'all', label: 'الكل' },
         { value: 'article', label: 'مقالات' },
@@ -163,7 +164,21 @@ const nextHub = gates[hubIndex + 1];
           {f.label}
         </button>
       ))}
+      </div>
+
+      <div class="flex items-center gap-3">
+        <input
+          id="content-search"
+          type="search"
+          placeholder="ابحث في المحتوى"
+          aria-label="ابحث في المحتوى"
+          class="w-full rounded-full border border-white/15 bg-black/40 px-4 py-2 text-sm text-white placeholder:text-white/40 focus:border-[#d4af37] focus:outline-none sm:w-72"
+        />
+        <a href="/saved" class="shrink-0 rounded-full border border-[#d4af37]/40 px-4 py-2 text-xs font-bold text-[#d4af37] transition hover:bg-[#d4af37]/10">المحفوظات</a>
+      </div>
     </div>
+
+    <p data-search-empty hidden class="mb-8 text-sm text-white/60">لا توجد نتائج مطابقة لبحثك.</p>
 
     {articles.length > 0 && (
       <section data-type-section="article" class="mb-10">
@@ -266,6 +281,8 @@ const nextHub = gates[hubIndex + 1];
   </style>
 
   <script>
+    import { initBookmarkButtons } from '../../../lib/bookmarks';
+
     function initHubPage() {
       const main = document.querySelector<HTMLElement>('#hub-main');
       if (main?.dataset.lastHref) {
@@ -279,15 +296,36 @@ const nextHub = gates[hubIndex + 1];
 
       const filterButtons = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
       const typeSections = document.querySelectorAll<HTMLElement>('[data-type-section]');
+      const searchInput = document.querySelector<HTMLInputElement>('#content-search');
+      const searchEmpty = document.querySelector<HTMLElement>('[data-search-empty]');
+      let activeType = 'all';
+
+      const applyFilters = () => {
+        const query = (searchInput?.value ?? '').trim().toLowerCase();
+        let shown = 0;
+        typeSections.forEach((section) => {
+          const typeMatch = activeType === 'all' || section.dataset.typeSection === activeType;
+          let visible = 0;
+          section.querySelectorAll<HTMLElement>('[data-card]').forEach((card) => {
+            const match = typeMatch && (!query || (card.dataset.search ?? '').includes(query));
+            card.classList.toggle('hidden', !match);
+            if (match) visible += 1;
+          });
+          section.hidden = visible === 0;
+          shown += visible;
+        });
+        if (searchEmpty) searchEmpty.hidden = shown > 0;
+      };
+
       filterButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
-          const value = btn.dataset.filter;
+          activeType = btn.dataset.filter ?? 'all';
           filterButtons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-          typeSections.forEach((section) => {
-            section.hidden = value !== 'all' && section.dataset.typeSection !== value;
-          });
+          applyFilters();
         });
       });
+      searchInput?.addEventListener('input', applyFilters);
+      initBookmarkButtons();
 
       const dialog = document.querySelector<HTMLDialogElement>('#quick-peek');
       if (!dialog) return;

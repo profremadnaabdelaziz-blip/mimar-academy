@@ -1,0 +1,61 @@
+---
+// src/pages/saved.astro
+import AcademyLayout from '../layouts/AcademyLayout.astro';
+import ContentCard from '../components/ContentCard.astro';
+import { memaarData } from '../data/memaarData';
+import { getItemsByHubId } from '../data/memaarContent';
+
+const allItems = memaarData.flatMap((portal) =>
+  portal.gates.flatMap((gate) => getItemsByHubId(gate.id)),
+);
+---
+
+<AcademyLayout
+  title="المحفوظات | أكاديمية مِعْمَار"
+  description="المقالات والكتب والمرئيات التي حفظتها للاحقاً"
+>
+  <a slot="header-start" href="/" class="text-sm font-bold text-[#d4af37] transition-colors hover:text-white">← الرئيسية</a>
+
+  <main class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+    <section class="mb-8 border-r-2 border-[#d4af37] pr-5 sm:pr-7">
+      <h1 class="font-amiri text-3xl font-bold leading-tight text-[#d4af37] sm:text-5xl">المحفوظات</h1>
+      <p class="mt-4 max-w-2xl text-sm leading-8 text-white/75">
+        كل ما حفظته للاحقاً يظهر هنا، ويُحفظ في هذا المتصفح.
+      </p>
+    </section>
+
+    <p data-saved-empty hidden class="mb-8 text-sm leading-7 text-white/55">
+      لم تحفظ أي عنصر بعد. اضغط على أيقونة الحفظ في أي بطاقة لإضافتها هنا.
+    </p>
+
+    <ul class="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+      {allItems.map((item) => (
+        <li data-saved-item={item.id} class="hidden">
+          <ContentCard {...item} />
+        </li>
+      ))}
+    </ul>
+  </main>
+
+  <script>
+    import { getBookmarks, initBookmarkButtons } from '../lib/bookmarks';
+
+    function refreshSaved() {
+      const saved = new Set(getBookmarks());
+      let count = 0;
+      document.querySelectorAll<HTMLElement>('[data-saved-item]').forEach((el) => {
+        const show = saved.has(el.dataset.savedItem ?? '');
+        el.classList.toggle('hidden', !show);
+        if (show) count += 1;
+      });
+      const empty = document.querySelector<HTMLElement>('[data-saved-empty]');
+      if (empty) empty.hidden = count > 0;
+    }
+
+    function initSavedPage() {
+      refreshSaved();
+      initBookmarkButtons(() => refreshSaved());
+    }
+    document.addEventListener('astro:page-load', initSavedPage);
+  </script>
+</AcademyLayout>
