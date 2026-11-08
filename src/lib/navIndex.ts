@@ -1,7 +1,7 @@
 // src/lib/navIndex.ts — بناء فهرس التنقل للبحث السريع ولوحة الأوامر (Command Palette)
 import { memaarData } from '../data/memaarData';
 import { levelIds, levels, hubUrl } from '../data/memaarConfig';
-import { getItems } from '../data/memaarContent';
+import { getItemsByHubId } from '../data/memaarContent';
 
 export interface NavEntry {
   kind: 'portal' | 'hub' | 'content';
@@ -35,26 +35,15 @@ export function buildNavIndex(): NavEntry[] {
           keywords: hubSummary,
         });
 
-        const items = getItems(hub, 'article');
-        items.forEach((item) => {
-          entries.push({
-            kind: 'content',
-            title: item.title,
-            context: `${hub.title} (${levels[levelId]})`,
-            href: item.href || hubUrl(portal.slug, levelId, hub.id, 'article'),
-            keywords: item.summary || item.author || '',
-          });
-        });
+      });
 
-        const books = getItems(hub, 'book');
-        books.forEach((book) => {
-          entries.push({
-            kind: 'content',
-            title: book.title,
-            context: `كتاب: ${hub.title}`,
-            href: book.href || hubUrl(portal.slug, levelId, hub.id, 'book'),
-            keywords: book.summary || book.author || '',
-          });
+      getItemsByHubId(hub.id).forEach((item) => {
+        entries.push({
+          kind: 'content',
+          title: item.title,
+          context: `${hub.title} — ${portal.title}`,
+          href: item.url,
+          keywords: item.summary,
         });
       });
     });

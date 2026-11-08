@@ -13,7 +13,7 @@ import {
   type ContentType,
   type LevelId,
 } from '../../../../../../data/memaarConfig';
-import { getItems, getTree, countFor } from '../../../../../../data/memaarContent';
+import { getItemsByHubId, getTree, type ContentItem } from '../../../../../../data/memaarContent';
 
 export function getStaticPaths() {
   return memaarData.flatMap((portal) =>
@@ -42,6 +42,8 @@ if (!portal || !hub || !levelKey || !selectedType) {
 const levelTitle = levels[levelKey];
 const axes = hub.axes ?? [];
 const hubSummary = axes.join('، ');
+const hubItems = getItemsByHubId(hub.id);
+const itemsOf = (type: ContentItem['type']) => hubItems.filter((item) => item.type === type);
 
 const cards = contentTypes.map((type) => {
   const meta = contentLabels[type];
@@ -54,7 +56,7 @@ const cards = contentTypes.map((type) => {
         ? `تتفرع هذه الشجرة من محاور البوابة: ${hubSummary}`
         : `استكشف ${hub.title} من خلال ${meta.title}. ${axes[0] ?? ''}`,
     executive: `الخلاصة التنفيذية داخل المستوى: ${hubSummary}`,
-    count: countFor(hub, type),
+    count: type === 'tree' ? 0 : itemsOf(type).length,
     href: hubUrl(portal.slug, levelKey, hub.id, type),
     active: type === selectedType,
   };
@@ -63,9 +65,13 @@ const cards = contentTypes.map((type) => {
 const featured = cards.find((c) => c.active)!;
 const others = cards.filter((c) => !c.active);
 
-const items = selectedType === 'tree' ? [] : getItems(hub, selectedType);
-const tree = selectedType === 'tree' ? getTree(hub) : [];
-const hasContent = items.length > 0 || tree.length > 0;
+const contentSections = (['article', 'book', 'video'] as const).map((type) => ({
+  type,
+  label: contentLabels[type].title,
+  items: itemsOf(type),
+}));
+const tree = selectedType === 'tree' ? getTree() : [];
+const hasContent = hubItems.length > 0 || tree.length > 0;
 
 const hubIndex = gates.findIndex((g) => g === hub);
 const prevHub = gates[hubIndex - 1];
@@ -154,28 +160,28 @@ const nextHub = gates[hubIndex + 1];
           <p class="text-sm leading-7 text-white/55">لم يُضف محتوى لهذه الخانة بعد. سيظهر هنا فور إضافته.</p>
         )}
 
-        {items.length > 0 && (
-          <ul class="grid gap-3">
-            {items.map((item) => {
-              const Tag = item.href ? 'a' : 'div';
-              return (
-                <li>
-                  <Tag
-                    href={item.href}
-                    class={`block rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-colors ${item.href ? 'hover:border-[#d4af37]/50' : ''}`}
-                  >
-                    <div class="flex flex-wrap items-baseline justify-between gap-2">
-                      <h3 class="font-amiri text-lg font-bold text-white">{item.title}</h3>
-                      {item.duration && <span class="text-[11px] text-white/50">{item.duration}</span>}
-                    </div>
-                    {item.author && <p class="mt-1 text-xs text-[#d4af37]">{item.author}</p>}
-                    {item.summary && <p class="mt-2 text-sm leading-7 text-white/65">{item.summary}</p>}
-                  </Tag>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        {selectedType !== 'tree' &&
+          contentSections.map((section) =>
+            section.items.length > 0 && (
+              <section aria-label={section.label} class="mb-10 last:mb-0">
+                <h3 class="mb-4 font-amiri text-xl font-bold text-[#d4af37]">{section.label}</h3>
+                <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {section.items.map((item) => (
+                    <li>
+                      <a
+                        href={item.url}
+                        class="flex h-full flex-col rounded-xl border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-[#d4af37]/50"
+                      >
+                        <h4 class="font-amiri text-lg font-bold text-white">{item.title}</h4>
+                        <p class="mt-2 flex-1 text-sm leading-7 text-white/65">{item.summary}</p>
+                        <span class="mt-4 text-[11px] text-white/50">{item.meta}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ),
+          )}
 
         {tree.length > 0 && (
           <ul class="space-y-3 text-sm">
