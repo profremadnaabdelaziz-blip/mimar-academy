@@ -1,0 +1,1 @@
+import{n as e,t}from"./bookmarks.DG8WKmY5.js";function n(){let e=new Set(t()),n=0;document.querySelectorAll(`[data-saved-item]`).forEach(t=>{let r=e.has(t.dataset.savedItem??``);t.classList.toggle(`hidden`,!r),r&&(n+=1)});let r=document.querySelector(`[data-saved-empty]`);r&&(r.hidden=n>0)}function r(){n(),e(()=>n())}document.addEventListener(`astro:page-load`,r);
