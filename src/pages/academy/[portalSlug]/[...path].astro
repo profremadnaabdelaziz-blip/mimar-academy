@@ -1,49 +1,39 @@
 ---
-// src/pages/[mimaarId]/level/[levelId]/hub/[hubId]/[contentType].astro
-import AcademyLayout from '../../../../../../layouts/AcademyLayout.astro';
-import { memaarData } from '../../../../../../data/memaarData';
-import {
-  getPortal,
-  getHub,
-  levels,
-  contentLabels,
-  contentTypes,
-  levelIds,
-  hubUrl,
-  type ContentType,
-  type LevelId,
-} from '../../../../../../data/memaarConfig';
-import { getItemsByHubId, getTree, type ContentItem } from '../../../../../../data/memaarContent';
+// src/pages/academy/[portalSlug]/[...path].astro
+import AcademyLayout from '../../../layouts/AcademyLayout.astro';
+import { memaarData } from '../../../data/memaarData';
+import { getPortal, getHub, hubUrl } from '../../../data/memaarConfig';
+import { contentLabels, contentTypes, levelIds, levels } from '../../../data/memaarLabels';
+import { getItemsByHubId, type ContentItem, type ContentType } from '../../../data/memaarContent';
 
 export function getStaticPaths() {
   return memaarData.flatMap((portal) =>
     portal.gates.flatMap((hub) =>
       levelIds.flatMap((levelId) =>
-        contentTypes.map((contentType) => ({
-          params: { mimaarId: portal.slug, levelId, hubId: String(hub.id), contentType },
+        contentTypes.map((type) => ({
+          params: { portalSlug: portal.slug, path: `level-${levelId}/hub-${hub.id}/${type}` },
         })),
       ),
     ),
   );
 }
 
-const { mimaarId, levelId, hubId, contentType } = Astro.params;
+const routeMatch = /^level-(\d+)\/hub-(\d+)\/(article|book|video)$/.exec(Astro.params.path ?? '');
+const portal = getPortal(Astro.params.portalSlug);
+const hub = getHub(portal, routeMatch?.[2]);
+const levelKey = levelIds.find((id) => id === Number(routeMatch?.[1]));
+const selectedType = contentTypes.find((t) => t === routeMatch?.[3]);
 
-const portal = getPortal(mimaarId);
-const gates = portal?.gates ?? [];
-const hub = getHub(portal, hubId);
-const levelKey = levelIds.find((l) => l === levelId) as LevelId | undefined;
-const selectedType = contentTypes.find((t) => t === contentType) as ContentType | undefined;
-
-if (!portal || !hub || !levelKey || !selectedType) {
-  throw new Error(`Invalid academy route: ${mimaarId}/${levelId}/${hubId}/${contentType}`);
+if (!portal || !hub || levelKey === undefined || !selectedType) {
+  throw new Error(`Invalid academy route: ${Astro.url.pathname}`);
 }
 
+const gates = portal.gates;
 const levelTitle = levels[levelKey];
 const axes = hub.axes ?? [];
 const hubSummary = axes.join('، ');
 const hubItems = getItemsByHubId(hub.id);
-const itemsOf = (type: ContentItem['type']) => hubItems.filter((item) => item.type === type);
+const itemsOf = (type: ContentType) => hubItems.filter((item: ContentItem) => item.type === type);
 
 const cards = contentTypes.map((type) => {
   const meta = contentLabels[type];
@@ -51,12 +41,9 @@ const cards = contentTypes.map((type) => {
     type,
     ...meta,
     cardTitle: `${hub.title} — ${meta.kind}`,
-    summary:
-      type === 'tree'
-        ? `تتفرع هذه الشجرة من محاور البوابة: ${hubSummary}`
-        : `استكشف ${hub.title} من خلال ${meta.title}. ${axes[0] ?? ''}`,
+    summary: `استكشف ${hub.title} من خلال ${meta.title}. ${axes[0] ?? ''}`,
     executive: `الخلاصة التنفيذية داخل المستوى: ${hubSummary}`,
-    count: type === 'tree' ? 0 : itemsOf(type).length,
+    count: itemsOf(type).length,
     href: hubUrl(portal.slug, levelKey, hub.id, type),
     active: type === selectedType,
   };
@@ -65,13 +52,11 @@ const cards = contentTypes.map((type) => {
 const featured = cards.find((c) => c.active)!;
 const others = cards.filter((c) => !c.active);
 
-const contentSections = (['article', 'book', 'video'] as const).map((type) => ({
+const contentSections = contentTypes.map((type) => ({
   type,
   label: contentLabels[type].title,
   items: itemsOf(type),
 }));
-const tree = selectedType === 'tree' ? getTree() : [];
-const hasContent = hubItems.length > 0 || tree.length > 0;
 
 const hubIndex = gates.findIndex((g) => g === hub);
 const prevHub = gates[hubIndex - 1];
@@ -156,57 +141,30 @@ const nextHub = gates[hubIndex + 1];
       </div>
 
       <div class="mt-8 border-t border-white/10 pt-6">
-        {!hasContent && (
+        {hubItems.length === 0 && (
           <p class="text-sm leading-7 text-white/55">لم يُضف محتوى لهذه الخانة بعد. سيظهر هنا فور إضافته.</p>
         )}
 
-        {selectedType !== 'tree' &&
-          contentSections.map((section) =>
-            section.items.length > 0 && (
-              <section aria-label={section.label} class="mb-10 last:mb-0">
-                <h3 class="mb-4 font-amiri text-xl font-bold text-[#d4af37]">{section.label}</h3>
-                <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {section.items.map((item) => (
-                    <li>
-                      <a
-                        href={item.url}
-                        class="flex h-full flex-col rounded-xl border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-[#d4af37]/50"
-                      >
-                        <h4 class="font-amiri text-lg font-bold text-white">{item.title}</h4>
-                        <p class="mt-2 flex-1 text-sm leading-7 text-white/65">{item.summary}</p>
-                        <span class="mt-4 text-[11px] text-white/50">{item.meta}</span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ),
-          )}
-
-        {tree.length > 0 && (
-          <ul class="space-y-3 text-sm">
-            {tree.map((root) => (
-              <li>
-                <p class="font-amiri text-lg font-bold text-[#d4af37]">{root.title}</p>
-                {root.children && (
-                  <ul class="mr-3 mt-2 space-y-2 border-r border-[#d4af37]/30 pr-4">
-                    {root.children.map((branch) => (
-                      <li>
-                        <p class="font-bold text-white/90">{branch.title}</p>
-                        {branch.children && (
-                          <ul class="mr-3 mt-1.5 space-y-1 border-r border-white/15 pr-4 text-white/65">
-                            {branch.children.map((leaf) => (
-                              <li>{leaf.href ? <a href={leaf.href} class="hover:text-[#d4af37]">{leaf.title}</a> : leaf.title}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
+        {contentSections.map((section) =>
+          section.items.length > 0 && (
+            <section aria-label={section.label} class="mb-10 last:mb-0">
+              <h3 class="mb-4 font-amiri text-xl font-bold text-[#d4af37]">{section.label}</h3>
+              <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {section.items.map((item) => (
+                  <li>
+                    <a
+                      href={item.url}
+                      class="flex h-full flex-col rounded-xl border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-[#d4af37]/50"
+                    >
+                      <h4 class="font-amiri text-lg font-bold text-white">{item.title}</h4>
+                      <p class="mt-2 flex-1 text-sm leading-7 text-white/65">{item.summary}</p>
+                      <span class="mt-4 text-[11px] text-white/50">{item.meta}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ),
         )}
       </div>
     </article>

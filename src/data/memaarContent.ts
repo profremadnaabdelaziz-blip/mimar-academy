@@ -21,7 +21,7 @@ memaarData.forEach((pillar) => {
   pillar.gates.forEach((gate) => {
     const focus =
       (gate as { description?: string }).description || gate.axes.join('، ');
-    const typeUrl = (type: ContentType) => hubUrl(pillar.slug, 'level1', gate.id, type);
+    const typeUrl = (type: ContentType) => hubUrl(pillar.slug, 1, gate.id, type);
 
     contentDatabase[gate.id] = [
       {
@@ -63,7 +63,3 @@ export function getItemsByHubId(hubId: number | string): ContentItem[] {
   return contentDatabase[id] || [];
 }
 
-// Tree content is not connected yet; the tree tab renders its empty state.
-export function getTree(): [] {
-  return [];
-}

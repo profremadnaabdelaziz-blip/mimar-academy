@@ -1,4 +1,4 @@
-/ src/data/memaarConfig.ts
+// src/data/memaarConfig.ts
 import { memaarData } from "./memaarData";
 import type { Gate, Pillar } from "./memaarData";
 import type { ContentType } from "./memaarContent";

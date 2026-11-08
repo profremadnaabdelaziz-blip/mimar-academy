@@ -1,6 +1,7 @@
 // src/lib/navIndex.ts — بناء فهرس التنقل للبحث السريع ولوحة الأوامر (Command Palette)
 import { memaarData } from '../data/memaarData';
-import { levelIds, levels, hubUrl } from '../data/memaarConfig';
+import { hubUrl } from '../data/memaarConfig';
+import { levelIds, levels } from '../data/memaarLabels';
 import { getItemsByHubId } from '../data/memaarContent';
 
 export interface NavEntry {
@@ -19,7 +20,7 @@ export function buildNavIndex(): NavEntry[] {
       kind: 'portal',
       title: portal.title,
       context: portal.short || 'بوابة رئيسية',
-      href: portal.gates[0] ? hubUrl(portal.slug, 'level1', portal.gates[0].id, 'article') : '/',
+      href: portal.gates[0] ? hubUrl(portal.slug, 1, portal.gates[0].id, 'article') : '/',
       keywords: portal.desc || '',
     });
 
