@@ -1,8 +1,10 @@
 ---
 // src/pages/[mimaarId]/level/[levelId]/hub/[hubId]/[contentType].astro
 import AcademyLayout from '../../../../../../layouts/AcademyLayout.astro';
-import { memaarData, getPortal, getHub } from '../../../../../../data/memaarData';
+import { memaarData } from '../../../../../../data/memaarData';
 import {
+  getPortal,
+  getHub,
   levels,
   contentLabels,
   contentTypes,
@@ -96,7 +98,7 @@ const nextHub = gates[hubIndex + 1];
     </nav>
 
     <section class="mb-8 border-r-2 border-[#d4af37] pr-5 sm:pr-7">
-      <p class="mb-2 text-xs font-bold text-[#d4af37]">{portal.subtitle}</p>
+      <p class="mb-2 text-xs font-bold text-[#d4af37]">{portal.short}</p>
       <h1 class="font-amiri text-3xl font-bold leading-tight text-[#d4af37] sm:text-5xl">{hub.title}</h1>
       {hubSummary && <p class="mt-4 max-w-2xl text-sm leading-8 text-white/75">{hubSummary}</p>}
     </section>

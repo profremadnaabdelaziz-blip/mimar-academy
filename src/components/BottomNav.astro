@@ -1,7 +1,7 @@
 ---
 // src/components/BottomBar.astro — شريط التنقل السفلي الذكي والموسوعي للهواتف والتابلت
 import { memaarData } from '../data/memaarData';
-import { hubUrl, portalIcons, shortTitle } from '../data/memaarConfig';
+import { hubUrl, portalIcons } from '../data/memaarConfig';
 
 interface Props {
   active?: string;
@@ -10,7 +10,7 @@ const { active } = Astro.props;
 
 const items = memaarData.map((p) => ({
   slug: p.slug,
-  label: shortTitle(p.title),
+  label: p.short,
   icon: portalIcons[p.slug],
   total: p.gates.length,
   href: p.gates[0] ? hubUrl(p.slug, 'level1', p.gates[0].id, 'article') : '/',

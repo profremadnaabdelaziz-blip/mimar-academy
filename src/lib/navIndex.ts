@@ -18,7 +18,7 @@ export function buildNavIndex(): NavEntry[] {
     entries.push({
       kind: 'portal',
       title: portal.title,
-      context: portal.subtitle || 'بوابة رئيسية',
+      context: portal.short || 'بوابة رئيسية',
       href: portal.gates[0] ? hubUrl(portal.slug, 'level1', portal.gates[0].id, 'article') : '/',
       keywords: portal.desc || '',
     });
